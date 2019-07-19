@@ -1,4 +1,2 @@
 Wasin's Blog ([Old](https://blog.wasin.io))
 ========================
-
-* [Test](posts/text.html)
