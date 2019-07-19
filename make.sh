@@ -153,6 +153,12 @@ elif [ "$CMD" == "build" ]; then
     if [ -z "$2" ] || [ "$2" == "all" ]; then
         echo "Build all posts"
 
+        # check if the directory is empty
+        if [ ! "$(ls -A src)" ]; then
+            echo "src/ is empty"
+            exit 0
+        fi
+
         for file in src/*.txt;
         do
             echo "$file";
@@ -181,13 +187,19 @@ elif [ "$CMD" == "build" ]; then
 
     # build index.html page
     elif [ "$2" == "index" ]; then
+        # check if the directory is empty
+        if [ ! "$(ls -A src)" ]; then
+            echo "src/ is empty"
+            exit 0
+        fi
+
         echo "Build index.html"
         build_index
 
         echo "Copy supporting files into $BUILD_DIR"
         build_cpsupportfiles
     fi
-    # otherwise not match any commands
+# otherwise not match any commands
 else
     print_help
 fi
