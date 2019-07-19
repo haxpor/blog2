@@ -9,6 +9,16 @@ This project doesn't aim to provide good looking website thus style. Pure focus 
 
 # make.sh
 
+## Dependency
+
+`make.sh` depends on
+
+* `firefox` - technically can be anything, but it's just I use firefox so...
+* `pandoc` - to process .txt into .html
+* `inotifywait` - to listen to file events then do our custom operations on top
+
+## How to use
+
 Use `make.sh` to manage and edit a new/existing post.
 
 * `./make.sh new <post.txt>` - in which `<post.txt>` can be either new or existing file. If it's the latter
@@ -17,6 +27,16 @@ it listen to changes event of file, and open browser tab (`firefox` for now) for
 changes immediately.
 * `bash make.sh build [all]` - build all `src/*.txt` files, and index file
 * `bash make.sh build index` - build `index.html` file
+
+# Deployment
+
+Usually this project should be working with a deploy script.
+
+I have separate private deploy script that just execute commands support from `make.sh` to build all stuff, then upload generated files (usually via `rsync`) to remote server.
+
+Upload files inside `build/` directory to remote server. That's it.
+
+Note: The target directory to be uploaded to is arbitrary as desired.
 
 # Credits
 

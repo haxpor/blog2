@@ -11,11 +11,13 @@
 
 CMD=$1
 
+# build directory for processed .txt file as .html
+BUILD_DIR=build
+
 # browser to open to see the changes of editing .html file
 BROWSER=firefox
 
-print_help()
-{
+print_help() {
     echo "Management script"
     echo "Usage: make <operation> [options]"
     echo ""
@@ -32,11 +34,45 @@ print_help()
     echo "  build [all,index]   - build .txt source file into .html"
     echo ""
     echo "          Usage: build [all]"
-    echo "                 build all src/*.txt file into posts/*.html"
+    echo "                 build all src/*.txt file into posts/*.html, and index.txt into index.html"
     echo ""
     echo "          Usage: build index"
-    echo "                 build index.txt into index.html"
+    echo "                 build only index.txt into index.html"
     echo ""
+}
+
+build_index() {
+    # copy template index file into file we will be editing
+    cp -p index_template.txt /tmp/blog2_index.txt
+
+    # source all titles from src/*.txt into index.txt
+    for file in src/*.txt;
+    do
+        # get filename without extension
+        html_fname=$(basename "$file")
+        # replace empty space with underscore
+        html_fname=${oname// /_}
+        # replace to use .html extension
+        html_fname=${oname%%.*}.html
+
+        title=`head -1 $file`
+        echo "* [$title]($html_fname)" >> /tmp/blog2_index.txt
+
+        echo "source title from $file";
+    done
+
+    # process into html
+    pandoc -c belug1.css -H header.html -B before-min.html -A after-min.html /tmp/blog2_index.txt -o $BUILD_DIR/index.html
+
+    # show error messasge when things went wrong
+    if [ $? -ne 0 ]; then
+        echo "Error building index.html"
+        exit 1
+    fi
+}
+
+build_cpsupportfiles() {
+    cp -p belug1.css $BUILD_DIR/belug1.css
 }
 
 if [ -z "$CMD" ] || [ "$CMD" == "--help" ]; then
@@ -89,28 +125,28 @@ if [ "$CMD" == "new" ]; then
         fi
     fi
 
-    # create posts directory if not yet exist
-    if [ ! -d posts ]; then
-        mkdir posts
-        echo "Created posts/ directory"
+    # create build directory if not yet exist
+    if [ ! -d $BUILD_DIR ]; then
+        mkdir $BUILD_DIR
+        echo "Created $BUILD_DIR directory"
     fi
 
     # pre-convert so users can see the result of .html now
-    pandoc -c ../belug1.css -H header.html -B before.html -A after.html "src/$file_name" -o "posts/${file_name%%.*}.html"
+    pandoc -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" -o "$BUILD_DIR/${file_name%%.*}.html"
 
     # now open the browser tab
-    ${BROWSER} posts/${file_name%%.*}.html
+    ${BROWSER} $BUILD_DIR/${file_name%%.*}.html
 
     # wait and listen to file changes event for writing
     # note: don't try to execute this in the background, it's mess to clean up later
-    while inotifywait -e modify "src/$file_name" || true; do pandoc -c ../belug1.css -H header.html -B before.html -A after.html "src/$file_name" -o "posts/${file_name%%.*}.html" ; done
+    while inotifywait -e modify "src/$file_name" || true; do pandoc -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" -o "$BUILD_DIR/${file_name%%.*}.html" ; done
     # show error messasge when things went wrong
     if [ $? -ne 0 ]; then
         echo "Can't listen to file changes event"
         exit 1
     fi
 
-    # re-build all posts automatically
+    # re-build all build automatically
 elif [ "$CMD" == "build" ]; then
     # get what to build
     # if empty, then build for all posts
@@ -128,7 +164,7 @@ elif [ "$CMD" == "build" ]; then
             # replace to use .html extension
             oname=${oname%%.*}.html
 
-            pandoc -c ../belug1.css -H header.html -B before.html -A after.html "$file" -o "posts/${oname}";
+            pandoc -c belug1.css -H header.html -B before.html -A after.html "$file" -o "$BUILD_DIR/${oname}";
 
             # show error messasge when things went wrong
             if [ $? -ne 0 ]; then
@@ -138,24 +174,18 @@ elif [ "$CMD" == "build" ]; then
         done
 
         echo "Build index.html"
-        pandoc -c belug1.css -H header.html -B before-min.html -A after-min.html index.txt -o index.html
+        build_index
 
-        # show error messasge when things went wrong
-        if [ $? -ne 0 ]; then
-            echo "Error building index.html"
-            exit 1
-        fi
+        echo "Copy supporting files into $BUILD_DIR"
+        build_cpsupportfiles
 
     # build index.html page
     elif [ "$2" == "index" ]; then
         echo "Build index.html"
-        pandoc -c belug1.css -H header.html -B before-min.html -A after-min.html index.txt -o index.html
+        build_index
 
-        # show error messasge when things went wrong
-        if [ $? -ne 0 ]; then
-            echo "Error building index.html"
-            exit 1
-        fi
+        echo "Copy supporting files into $BUILD_DIR"
+        build_cpsupportfiles
     fi
     # otherwise not match any commands
 else

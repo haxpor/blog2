@@ -1,2 +1,4 @@
 *.swp
 *.swo
+# dirty directory for building (generated)
+build
