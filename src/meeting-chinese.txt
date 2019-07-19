@@ -1,0 +1,58 @@
+Going out. Tidbits WeChat Mini-game Insights.
+=========================================================
+
+You know, I'm kinda in between introvert and extrovert. But lately, I've spent most of the time
+inside the room trying to make the end meet (without success).
+
+So whenever I go out of the room, it's like a caveman going out for sunshine.
+
+Ok, the point is I kinda need to step back. I was on the mission to find the job after realize
+I won't make it, there's no light at the end. I'm no longer happy with what I'm doing. It's slightly
+shock that after graduated from the university back in 2011. Now it's mostly 8 years without a
+major success or breakthrough on trying to be sustainable on things I was doing. Feeling of wasted?
+
+I don't know. Now I'm 30. To be honest, I fear.
+
+---
+
+Anyway, I went to meet with this Chinese connection through my Chinese girlfriend. Three results
+I got from meeting
+
+1. New friends
+2. More tidbits insights from WeChat mini-game market & ecosystem
+3. Self-realization
+
+Just skip first point, I'm mostly a human on earth with minimal friends.
+
+## WeChat mini-game market
+
+The following tidbits come from the Chinese guy I was talking to. He made 4 mini-games published on
+WeChat mini-game platform published by Tencent; on behalf of his own personal account.
+
+* 80-90% revenue split; favored to Tencent to publish your game on WeChat mini-game platform
+* Tencent helps bring in ~8,000 new users daily
+* One of the games which is freemium made ~2,000 RMB daily.
+* Connections is important i.e. to uphold the limit of number of application can registered and published
+, publishing and featured on the store, etc.
+
+## Self-realization
+
+At the near end of meeting, I came to realization that my strategy is so wrong and broken. Even I
+knew what I should do, but I decided to follow what's right in my heart. "What's right" in this case
+means things I just wanna do without regards to business.
+
+He (the guy I was talking to) has very strong and good strategy. He stick to tech stack he already
+had skill at (as did in his job during time in Tencent), and business goal-oriented. Get quick money
+result from mini-game with simple similar game concept of those popular games in the market but with
+slightly adaptation. Use cocoscreator as engine (the thing I don't like about honestly as I'm not
+happy using it, unaligned to my energy which later costed me this result) for one code-base then
+publish on various platform included QQ, and others which support mini-game.
+
+The excitement of realization comes in that day and cool down in the next morning. I'm still a low
+level guy loving to work with low level stack. At some point I might need to accept this trade-off.
+
+I **can't go fast** with what I've chosen.
+
+Web ecosystem mainly for games **is not aligning** with my energy.
+
+The fear of not being successful is still there of what I've chosen.
