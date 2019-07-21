@@ -1,0 +1,91 @@
+RVO (Return Value Optimization)
+=========================================================
+
+Lately I was recalling and practicing C++ more. Not fully that I want to preach about it, but it's
+a realization that industry accepts it, and it'd be hard to find work without knowing it for my current
+situation.
+
+This post talks about `RVO` or (Return Value Optimization).
+
+The gotcha came during the time I implemented a postfix conversion function, then checked address of returned value against
+the outside (calling site) variable that receives the result. Surprisingly, it turns out to **be the same!**
+
+See the actual code below
+
+    std::string ConvertToPostfix(const std::string& infix) {
+        std::stringstream ss;
+        Stack<char> ts;
+
+        for (auto it = infix.begin(); it != infix.end(); ++it) {
+            char c = *it;
+
+            if (c == '+' ||
+                c == '-' ||
+                c == '*') {
+               ts.Push(c); 
+            } 
+            else if (c >= '0' && c <= '9') {
+                ss << c << " ";
+            }
+            else if (c == ')') {
+                ss << ts.Pop() << " ";
+
+                if (it == infix.end() - 1) {
+                    while (!ts.IsEmpty()) {
+                        ss << ts.Pop();
+                    }
+                }
+            }
+        }
+
+        return ss.str();
+    }
+
+No need to pay attention much to the actual implementation, I just want to be clear adding it there
+so in case you want to see what happens with `std::stringstream ss` so you can check it. 
+
+`std::stringstream::str()` function will return a temporary `std::string` every time we call it.
+Below is what [cppreference](https://en.cppreference.com/w/cpp/io/basic_stringstream/str) has a say
+about it.
+
+> **Notes**
+          The copy of the underlying string returned by str is a temporary object that will be
+          destructed at the end of the expression, so directly calling c_str() on the result
+          of str() (for example in auto *ptr = out.str().c_str();) results in a dangling
+          pointer.
+
+So taking that into account, a decision to make above function return by value should be safe and
+correct. Then I'll do some validations.
+
+Change returning line into the following
+
+    ...
+    std::string tmpStr = ss.str();
+    std::cout << "Before: " << std::addressof(tmpStr) << "\n";
+    return tmpStr;
+
+On the call site, we'd have
+
+    std::string postfix = ConvertToPostfix("5 * (((9+8) * (4*6)) + 7)");
+    std::cout << "After: " << std::addressof(postfix) << std::endl;
+
+Now what do you think about the result? Probably first thought would be, both addresses definitely
+be different. But it turns out to be opposite.
+
+    Before: 0x7ffec387ec90
+    After: 0x7ffec387ec90
+
+So what's is going on? After research, it's due to compiler optimization specifically it's called
+`RVO` or Return Value Optimization. In short, compiler eliminates the temporary object which is needed
+to be created to hold a return value from function. So now it acts like such return value is declared
+on stack at same time of that receiving end at the call site.
+
+## How to turn RVO off?
+
+Specify `-fno-elide-constructors` as compile flags to `gcc`. Now the result...
+
+    Before: 0x7ffc5a823450
+    After: 0x7ffc5a823690
+\
+\
+`First published on July, 21, 2019`
