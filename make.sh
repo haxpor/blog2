@@ -51,9 +51,9 @@ build_index() {
         # get filename without extension
         html_fname=$(basename "$file")
         # replace empty space with underscore
-        html_fname=${oname// /_}
+        html_fname=${html_fname// /_}
         # replace to use .html extension
-        html_fname=${oname%%.*}.html
+        html_fname=${html_fname%%.*}.html
 
         title=`head -1 $file`
         echo "* [$title]($html_fname)" >> /tmp/blog2_index.txt
