@@ -1,0 +1,79 @@
+OpenGL Notes - Shader
+=========================================================
+
+This post is as part of note series upon my OpenGL studying.
+
+For shader creation, the following OpenGL related functions will be used
+
+OpenGL Functions| Purpose
+-----|------------------------------------------------
+`glGenBuffers()`|Generate a new buffer to work with VBO, VAO, EBO, and other purposes
+`glBindBuffer()`|Bind to target buffer to work with it in current state
+`glBufferData()`|Copy vertex data into buffer's memory managed by OpenGL for currently bound buffer. This function will be closely working with `glVertexAttribPointer()` which helps define meaning of data inside vertex data.
+`glCreateShader()`|Create a shader object
+`glShaderSource()`|Set source code to shader object
+`glCompileShader()`|Compile shader object as prior setting its source code
+`glGetShaderiv()`|Fetch information of shader object i.e. mostly used to get compilation status after calling to `glCompileShader()`
+`glGetShaderInfoLog()`|Get information log string from the last compile operation of shader object i.e. usually we use this to get compile error string in case of error after we already identified that there is an error via `glGetShaderiv()`
+`glCreateProgram()`|Create a shader program object
+`glAttachShader()`|Attach a shader object to shader program object preparing to be linked together later
+`glLinkProgram()`|Link shader program object depending on its attached shader objects; to create executable shader program for specific pass i.e. vertex shader, geometry shader, fragment shader if such shader program object has it.
+`glGetProgramiv()`|Fetch informatin of shader program object i.e. mostly used to get linking status after calling `glLinkProgram()`
+`glGetProgramInfoLog()`|Get information log string from the last linking or validating operation of shader program object
+`glDeleteShader()`|Mark a shader object to be deleted after it is no longer attached to any shader object
+`glVertexAttribPointer()`|Tell OpenGL for its meaning of data inside vertex data i.e. which is vertex position, which is color, which is normal etc.
+`glEnableVertexAttribArray()`|Enable to use vertex attribute array
+`glUseProgram()`|Use shader program
+`glGenVertexArrays()`|Generate VAO, can be just one or multiples
+`glBindVertexArray()`|Bind VAO
+`glDrawArrays()`|Draw primitives
+`glDrawElements()`|Draw indexed primitives
+
+## Vertex data Preparation
+`glBufferData` is just to copy the whole memory data to initialize data on GPU, later we will need
+to tell OpenGL how to interpret such data via `glVertexAttribPointer()`. It's like telling it whether
+the data sent are **tightly packed**, any values in between, which is position & which is material data.
+
+Remember `layout (location = 0)` as seen in GLSL code. This is the location of vertex attribute to be
+configured with `glVertexAttribPointer()` and `glEnableVertexAttribArray()`s first parameter. If we **did not** do this, then we will
+have to make call to `glGetAttribLocation()` or `glGetUniformLocation()` to get the location of defined
+variables inside GLSL code.
+
+## VAO (Vertex Array Object)
+
+This is to help group the configuration of vertex data preparation included binding to VBO, setting its
+vertex attributes thus reduce lines of code and time we need for this boiler-plate code every time we
+need to render something.
+
+Anyway for OpenGL3.3+, it is a requirement to use VAO whenever we render things on screen.
+
+It stores the following information
+
+* Calls to `glEnableVertexAttribArray()` or `glDisableVertexAttribArray()`
+* Vertex attribute configurations via `glVertexAttribPointer()`
+* VBOs associated with vertex attributes by calls to `glVertexAttribPointer()`
+* Calls to `glBindBuffer()` in case if target is `GL_ELEMENT_ARRAY_BUFFER`
+
+## Shader Program
+
+According to man page of `glUseProgram()`, it states that if we pass in `0` as a parameter to the
+function, then it's undefined behavior. Although this might be usual action whenever we want to reset
+or unbind the current in-use stuff. Make an exception for it, no further action need after you
+render stuff on screen.
+
+Compare this to `glBindVertexArray()` which we can safely pass in `0`, it will break the current binding.
+
+## Misc Notes
+* We can specify vertex data in NDC (Normalized Device Coordinate) right away as an input to vertex
+shader. Vertex shader has no need to transform such data further, and just set it to `gl_Position`.
+* Just specify output in fragment shader, it will be automatically treated as color output.
+* In `C++11`, you can use [this](https://stackoverflow.com/a/5460235/571227) multiple line to define
+string to embed GLSL code inside the source code conveniently.
+
+## Resource
+
+* [learnopengl.com - Hello Triangle](https://learnopengl.com/Getting-started/Hello-Triangle)
+
+\
+\
+`First published on Aug, 3, 2019`
