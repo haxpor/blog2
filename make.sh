@@ -17,6 +17,13 @@ BUILD_DIR=build
 # browser to open to see the changes of editing .html file
 BROWSER=firefox
 
+# fixed published date in source files
+PUBLISHED_DATE_PATTERN="First published on "
+
+# colors
+GREEN='\033[0;32m'
+NC='\033[0m'
+
 print_help() {
     echo "Management script"
     echo "Usage: make <operation> [options]"
@@ -58,9 +65,10 @@ build_index() {
         html_fname=${html_fname%%.*}.html
 
         title=`head -1 $file`
+        
         echo "* [$title]($html_fname)" >> /tmp/blog2_index.txt
 
-        echo "source title from $file";
+        printf "source title from %31s\n" "$file"
     done
 
     # process into html
@@ -167,14 +175,18 @@ elif [ "$CMD" == "build" ]; then
 
         find src -type f -name "*.txt" -print0 | xargs --null ls -1 | sort -V | while read file
         do
-            echo "$file";
-
             # get output filename without extension
             oname=$(basename "$file")
             # replace empty space with underscore
             oname=${oname// /_}
             # replace to use .html extension
             oname=${oname%%.*}.html
+
+            # find published date as wrote (fixed pattern) inside the source file
+            pub_string=$(tail "$file" | grep "$PUBLISHED_DATE_PATTERN");
+            pub_string=${pub_string:19:-1};
+
+            printf "%30s  ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$pub_string"
 
             pandoc -c belug1.css -H header.html -B before.html -A after.html "$file" -o "$BUILD_DIR/${oname}";
 
