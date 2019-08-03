@@ -27,6 +27,13 @@ p.faq1, p.intro {text-align: left;
 a:link {color: blue; text-decoration: none }
 a:hover {background:#eeeeee; color:black}
 a:visited { color: blue; text-decoration: none }
+th {
+    border-bottom: 2px solid black;
+}
+tr td {
+    border-bottom: 1px solid #BBB;
+    padding-bottom: 6px;
+}
 
 /* customized from now */
 blockquote {
