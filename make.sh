@@ -131,6 +131,10 @@ if [ "$CMD" == "new" ]; then
         echo "Created $BUILD_DIR directory"
     fi
 
+    # copy supporting files
+    echo "Copy supporting files into $BUILD_DIR"
+    build_cpsupportfiles
+
     # pre-convert so users can see the result of .html now
     pandoc -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" -o "$BUILD_DIR/${file_name%%.*}.html"
 
