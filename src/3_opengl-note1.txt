@@ -1,4 +1,4 @@
-OpenGL Notes - Shader
+OpenGL Notes 1 - Shader
 =========================================================
 
 This post is as part of note series upon my OpenGL studying.
