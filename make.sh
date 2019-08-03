@@ -39,6 +39,8 @@ print_help() {
     echo "          Usage: build index"
     echo "                 build only index.txt into index.html"
     echo ""
+    echo "  clean - Clean all files inside build directory (build/)"
+    echo ""
 }
 
 build_index() {
@@ -46,7 +48,7 @@ build_index() {
     cp -p index_template.txt /tmp/blog2_index.txt
 
     # source all titles from src/*.txt into index.txt
-    for file in src/*.txt;
+    find src -type f -name "*.txt" -print0 | xargs --null ls -1 | sort -V | while read file
     do
         # get filename without extension
         html_fname=$(basename "$file")
@@ -163,7 +165,7 @@ elif [ "$CMD" == "build" ]; then
             exit 0
         fi
 
-        for file in src/*.txt;
+        find src -type f -name "*.txt" -print0 | xargs --null ls -1 | sort -V | while read file
         do
             echo "$file";
 
@@ -203,6 +205,9 @@ elif [ "$CMD" == "build" ]; then
         echo "Copy supporting files into $BUILD_DIR"
         build_cpsupportfiles
     fi
+# clean build directory
+elif [ "$CMD" == "clean" ]; then
+    rm -rf $BUILD_DIR/* && echo "Clean $BUILD_DIR"
 # otherwise not match any commands
 else
     print_help
