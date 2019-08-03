@@ -69,6 +69,9 @@ shader. Vertex shader has no need to transform such data further, and just set i
 * Just specify output in fragment shader, it will be automatically treated as color output.
 * In `C++11`, you can use [this](https://stackoverflow.com/a/5460235/571227) multiple line to define
 string to embed GLSL code inside the source code conveniently.
+* See [here](https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)) for more information on
+how to use *Layout Qualifier* in GLSL; included the case when such variable eats up not just 1 single
+location but multiples.
 
 ## Resource
 
