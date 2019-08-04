@@ -146,14 +146,14 @@ if [ "$CMD" == "new" ]; then
     build_cpsupportfiles
 
     # pre-convert so users can see the result of .html now
-    pandoc -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" -o "$BUILD_DIR/${file_name%%.*}.html"
+    pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" -o "$BUILD_DIR/${file_name%%.*}.html"
 
     # now open the browser tab
     ${BROWSER} $BUILD_DIR/${file_name%%.*}.html
 
     # wait and listen to file changes event for writing
     # note: don't try to execute this in the background, it's mess to clean up later
-    while inotifywait -e modify "src/$file_name" || true; do pandoc -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" -o "$BUILD_DIR/${file_name%%.*}.html" ; done
+    while inotifywait -e modify "src/$file_name" || true; do pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" -o "$BUILD_DIR/${file_name%%.*}.html" ; done
     # show error messasge when things went wrong
     if [ $? -ne 0 ]; then
         echo "Can't listen to file changes event"
@@ -188,7 +188,7 @@ elif [ "$CMD" == "build" ]; then
 
             printf "%40s  ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$pub_string"
 
-            pandoc -c belug1.css -H header.html -B before.html -A after.html "$file" -o "$BUILD_DIR/${oname}";
+            pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "$file" -o "$BUILD_DIR/${oname}";
 
             # show error messasge when things went wrong
             if [ $? -ne 0 ]; then
