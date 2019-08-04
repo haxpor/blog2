@@ -68,7 +68,7 @@ build_index() {
         
         echo "* [$title]($html_fname)" >> /tmp/blog2_index.txt
 
-        printf "source title from %31s\n" "$file"
+        printf "source title from %40s\n" "$file"
     done
 
     # process into html
@@ -186,7 +186,7 @@ elif [ "$CMD" == "build" ]; then
             pub_string=$(tail "$file" | grep "$PUBLISHED_DATE_PATTERN");
             pub_string=${pub_string:19:-1};
 
-            printf "%30s  ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$pub_string"
+            printf "%40s  ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$pub_string"
 
             pandoc -c belug1.css -H header.html -B before.html -A after.html "$file" -o "$BUILD_DIR/${oname}";
 
