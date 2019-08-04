@@ -39,6 +39,13 @@ configured with `glVertexAttribPointer()` and `glEnableVertexAttribArray()`s fir
 have to make call to `glGetAttribLocation()` or `glGetUniformLocation()` to get the location of defined
 variables inside GLSL code.
 
+> **Note:** A special care needs to be made if user uses explicit define location via `layout (location = ...)`
+for `uniform` variable inside GLSL code in OpenGL version lower than 4.3. You have to use extension by
+explicitly defined \
+`extension GL_ARB_explicit_uniform_location : require` under `#version` or else it will be error \
+`uniform explicit location requires GL_ARB_explicit_uniform_location and either GL_ARB_explicit_attrib_location or GLSL 3.30.` \
+More information [here](https://stackoverflow.com/a/38146938/571227).
+
 ## VAO (Vertex Array Object)
 
 This is to help group the configuration of vertex data preparation included binding to VBO, setting its
@@ -76,6 +83,13 @@ location but multiples.
 ## Resource
 
 * [learnopengl.com - Hello Triangle](https://learnopengl.com/Getting-started/Hello-Triangle)
+
+## Update
+
+`Aug, 5, 2019`
+
+* Added a note about special care when using explicit define location via `layout (location = ...)`
+with `uniform` variable inside GLSL.
 
 \
 \
