@@ -1,0 +1,179 @@
+Geometric Primitives Notes
+=========================================================
+
+This is as part of Mathematics studying for Graphics and Game development notes (in series).
+
+## Representation Techniques
+
+It can be represented via
+
+1. **Implicit Form**
+
+    For example,
+
+    $$ x^2 + y^2 + z^2 = 1 $$
+
+    This equation is true for all points on the surface of a unit sphere centered at the origin.
+
+2. **Parametric Form**
+
+    For example,
+
+    $$ x(t) = \cos 2{\pi}t $$
+    $$ y(t) = \sin 2{\pi}t $$
+
+3. ***Straightforward* Form**
+
+    Capture the most important and obvious information directly. For example, line segment, it has 2
+    endpoints. For a sphere, it has center and radius.
+
+4. **Degrees of Freedom**
+
+    Each one has its own *degrees of freedom*. It's a minimum number of required information to describe
+    such geometric primitive. Often we will find redundant piece of information that we could eliminate
+    i.e. vector having unit length.
+
+## Line and Rays
+### Parametric Representation of Rays
+
+For 2D ray can be defined with the following parametric equations
+
+$$ x(t) = x_0 + t{\Delta}x $$
+$$ y(t) = y_0 + t{\Delta}y $$
+
+Similarly to 3D as we just add another equation for another dimension to it.
+
+To represent it in *vector* notation,
+
+$$ p(t) = p_0 + td $$
+
+### Special 2D Representation of Lines
+
+In 2D we can represent line with
+
+$$ ax + by = d $$
+
+> **Note**: Other resource might use another form of (7) as
+> $$ ax + by + d = 0 $$
+> This flips the sign of $d$.
+
+Alternatively, we can represent above equation with *dot product* as follows
+
+$$ p \cdot n = d $$
+
+Look closely, above two equations are in similar form of normal line equation as follows
+
+$$ y = mx + b $$
+
+$m$ is slope and called *rise over run*.
+
+\
+Notes for (9)
+
+* $n$ which is unit vector gives the signed distance from the origin to the line. $d$ is positive if
+the line moves in the direction of $n$.
+
+## Spheres and Circles
+
+The sphere equation comes from a simple definition of set of all points that are a given distance
+from the center. Thus it comes down to
+
+$$ {\Vert}p-c{\Vert} = r $$
+
+where $p$ is any point on the surface of the sphere, $c$ is the center of the sphere, and $r$ is
+the radius.
+
+If we expand the above equation, then we get the form we get used to as follows.
+
+$$ (x-c_x)^2 + (y-c_y)^2 + (z-c_z)^2 = r^2 $$
+
+## Bounding Box
+### Representing AABBs
+
+It's based on keeping track of minimum and maximum value to represent the axis-aligned bounding box.
+
+$$ P_{min} = [\ x_{min}\ \ y_{min}\ \ z_{min}\ ] $$
+$$ P_{max} = [\ x_{max}\ \ y_{max}\ \ z_{max}\ ] $$
+
+The center point $c$ is given by
+
+$$ c = ( P_{min} + P_{max})/2 $$
+
+The **size vector** $s$ is the vector from $P_{min}$ to $P_{max}$ in turns this contains width, height,
+and length of the box.
+
+We can get its radius by
+
+$$ \begin{align*}
+r &= P_{min} - c \\
+  &= s/2
+\end{align*}$$
+
+## Planes
+### Implicit Definition - The Plane Equation
+
+$$ ax + by + cz = d $$
+$$ p \cdot n = d $$
+
+### Defining Using Three Points
+
+Assume there are two edges. $e_1$ is $\overrightarrow {p_{2}p_{3}}$, and $e_3$ is $\overrightarrow {p_{2}p_{1}}$
+in which those 3 points are in the plane.
+
+$$ e_3 = p_2 - p_1 $$
+$$ e_1 = p_3 - p_2 $$
+
+### Distance from Point to Plane
+
+Distance from point $p$ on the plane to point $q$ closest to it (which is not on the plane) is
+
+$$ \begin{align*}
+ p + an &= q  \\
+ (p + an) \cdot n &= q \cdot n \\
+ p \cdot n + (an) \cdot n &= q \cdot n \\
+ d + a &= q \cdot n \\
+ a &= q \cdot n -d
+\end{align*}$$
+
+where $a$ is the amount along $\vec n$.
+
+## Triangles
+
+Law of sines (see [proof](https://www.mathopenref.com/lawofsinesproof.html))
+
+$$ \frac{\sin{\theta}_1}{l_1} = \frac{\sin{\theta}_2}{l_2} = \frac{\sin{\theta}_3}{l_3} $$
+
+Law of cosines (see [proof](https://www.mathopenref.com/lawofcosinesproof.html))
+
+$$ l_1^2 = l_2^2 + l_3^2 - 2l_2l_3\cos\theta_1 $$
+$$ l_2^2 = l_1^2 + l_3^2 - 2l_1l_3\cos\theta_2 $$
+$$ l_3^2 = l_1^2 + l_2^2 - 2l_1l_2\cos\theta_3 $$
+
+Perimeter is
+
+$$ p = l_1 + l_2 + l_3 $$
+
+### Barycentric Space
+
+Any point inside a triangle can be expressed as the weighted average of the vertices. The weights are
+known as *barycentric coordinate*.
+
+Conversion from barycentric coordinates to 3D position
+
+$$ (b_1, b_2, b_3) \iff b_1v_1 + b_2v_2 + b_3v_3 $$
+
+where $b_1 + b_2 + b_3 = 1$
+
+We can interpret it as ratios of areas
+
+$$ b_1 = A(T_1)/A(T) $$
+$$ b_2 = A(T_2)/A(T) $$
+$$ b_3 = A(T_3)/A(T) $$
+
+## Resource
+
+* 3D Math Primer for Graphics and Game development - Chapter 12
+
+\
+\
+`First published on Aug, 4, 2019`
