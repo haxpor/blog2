@@ -46,6 +46,8 @@ print_help() {
     echo "          Usage: build index"
     echo "                 build only index.txt into index.html"
     echo ""
+    echo "  list  - List all of the posts"
+    echo ""
     echo "  clean - Clean all files inside build directory (build/)"
     echo ""
 }
@@ -83,6 +85,17 @@ build_index() {
 
 build_cpsupportfiles() {
     cp -p belug1.css $BUILD_DIR/belug1.css
+}
+
+list_allposts() {
+    find src -type f -name "*.txt" -print0 | xargs --null ls -1 | sort -V | while read file
+    do
+        # find published date as wrote (fixed pattern) inside the source file
+        pub_string=$(tail "$file" | grep "$PUBLISHED_DATE_PATTERN");
+        pub_string=${pub_string:19:-1};
+
+        printf "%40s  ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$pub_string"
+    done
 }
 
 if [ -z "$CMD" ] || [ "$CMD" == "--help" ]; then
@@ -220,6 +233,9 @@ elif [ "$CMD" == "build" ]; then
 # clean build directory
 elif [ "$CMD" == "clean" ]; then
     rm -rf $BUILD_DIR/* && echo "Clean $BUILD_DIR"
+# list all posts
+elif [ "$CMD" == "list" ]; then
+    list_allposts
 # otherwise not match any commands
 else
     print_help
