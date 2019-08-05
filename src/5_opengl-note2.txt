@@ -1,0 +1,94 @@
+OpenGL Notes 2
+=========================================================
+
+A few notes related to Shader and OpenGL in general.
+
+## `glVertexAttribPointer()`'s last parameter `pointer`
+
+Function prototype as seen from man page is
+
+`void glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer);`
+
+Man page describes this function's parameter as
+
+`Specifies a offset of the first component of the first generic vertex attribute in the array in the data
+store of the buffer currently bound to the GL_ARRAY_BUFFER target. The initial value is 0.`.
+
+The interesting thing is its parameter type which is `const GLvoid * pointer`. Why it needs to be
+opaque pointer as it just needs to be offset integer? The answer involves OpenGL's history of this
+function variant. In the past before VBOs, OpenGL still uses plain old vertex arrays which is called
+[Client-side Vertex Arrays](https://www.khronos.org/opengl/wiki/Client-Side_Vertex_Arrays).
+Such data reside in RAM, and need to be sent to GPU every time it wants to render.
+
+Consider the following example code as seen from the URL linked above.
+
+```
+glEnableClientState(GL_VERTEX_ARRAY);
+glVertexPointer(3, GL_FLOAT, sizeof(MyVertex), &vertex[0].x);
+glEnableClientState(GL_NORMAL_ARRAY);
+glNormalPointer(GL_FLOAT, sizeof(MyVertex), &vertex[0].nx);
+glClientActiveTexture(GL_TEXTURE0);
+glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+glTexCoordPointer(2, GL_FLOAT, sizeof(MyVertex), &vertex[0].s0);
+glClientActiveTexture(GL_TEXTURE1);
+glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+glTexCoordPointer(2, GL_FLOAT, sizeof(MyVertex), &vertex[0].s1);
+glClientActiveTexture(GL_TEXTURE2);
+glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+glTexCoordPointer(2, GL_FLOAT, sizeof(MyVertex), &vertex[0].s2);
+```
+
+The last parameter of `glVertexPointer()` is address, thus it's proper and correct to use opaque
+pointer. Then time passes `gl...Pointer()` evolves to support working with VBOs, its last parameter
+is [repurposed](https://stackoverflow.com/a/25087609/571227) to be used to pass an integer offset.
+
+## `glShaderSource()`'s 3rd parameter of `string`
+
+Function prototype as seen from man page is
+
+`void glShaderSource(GLuint shader, GLsizei count, const GLchar **string, const GLint *length);`
+
+Interesting thing is its 3rd parameter type which is `const GLchar **string`. Why it needs to be
+double pointer to `GLchar`? This [answer](https://stackoverflow.com/a/22100410/571227) on SO explains
+at best to its design and purpose. In short, `glShaderSource()` sees it in concept of a file. Each
+string can represent content of one file, so we could implicitly concatenate source string from different
+files together into 1 shader object.
+
+Great example taken from such linked URL above.
+
+```
+std::string v = "#version 150\n";
+std::string c = ReadTextFile("common.glsl"); // read a string with the file contents
+std::string s = ReadTextFile("mesh.vert");   // same here
+
+GLchar const* files[] = { v.c_str(), c.c_str(), s.c_str() };
+GLint lengths[]       = { v.size(),  c.size(),  s.size()  };
+
+glShaderSource(id, 3, files, lengths);
+```
+
+You can see we can insert shared common GLSL source code as read from different source/file, then
+combine it altogether to represent 1 shader source. Flexibility I see.
+
+## Interpolation of Fragment Colors
+
+I came up with a simple question of why color is smoothed out over the primitive surface although
+we just specified only a few color (as for a triangle, 3 colors for each vertex are just needed to be
+filled). The thing is that this takes advantage of *linear interpolation* in Rasterization stage of
+rendering pipeline. That's why we send colors in as part of vertex attribute data to get this benefit
+for free.
+
+Asides, let's say you use `uniform`, then you can't achieve the same smoothed-color effect only with
+fragment shader alone. Also it's *kinda* possible to define as many `uniform` (maximum uniform locations is
+`GL_MAX_UNIFORM_LOCATIONS` as defined in OpenGL's header file. On my integrated GPU Intel HD Graphics 4000,
+I inspected it to be 0x826E which is 33390.) colors for each vertex of our primitive might have but
+still we need to do more work on mapping a color to which vertex. This is wasteful in terms of memory
+on RAM, and GPU, and wasteful usage of `uniform` variables we could define in GLSL code.
+
+## Resource
+
+* [learnopengl.com - Shader](https://learnopengl.com/Getting-started/Shaders)
+
+\
+\
+`First published on Aug, 6, 2019`
