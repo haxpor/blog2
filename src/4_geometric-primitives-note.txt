@@ -104,10 +104,10 @@ and length of the box.
 
 We can get its radius by
 
-$$ \begin{align*}
+$$ \begin{align}
 r &= P_{min} - c \\
-  &= s/2
-\end{align*}$$
+  &= s/2 
+\end{align}$$
 
 ## Planes
 ### Implicit Definition - The Plane Equation
@@ -127,13 +127,13 @@ $$ e_1 = p_3 - p_2 $$
 
 Distance from point $p$ on the plane to point $q$ closest to it (which is not on the plane) is
 
-$$ \begin{align*}
- p + an &= q  \\
- (p + an) \cdot n &= q \cdot n \\
- p \cdot n + (an) \cdot n &= q \cdot n \\
- d + a &= q \cdot n \\
+$$ \begin{align}
+ p + an &= q \nonumber  \\
+ (p + an) \cdot n &= q \cdot n \nonumber \\
+ p \cdot n + (an) \cdot n &= q \cdot n \nonumber \\
+ d + a &= q \cdot n \nonumber \\
  a &= q \cdot n -d
-\end{align*}$$
+\end{align}$$
 
 where $a$ is the amount along $\vec n$.
 
