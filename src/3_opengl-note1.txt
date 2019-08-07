@@ -42,7 +42,7 @@ variables inside GLSL code.
 > **Note:** A special care needs to be made if user uses explicit define location via `layout (location = ...)`
 for `uniform` variable inside GLSL code in OpenGL version lower than 4.3. You have to use extension by
 explicitly defined \
-`extension GL_ARB_explicit_uniform_location : require` under `#version` or else it will be error \
+`#extension GL_ARB_explicit_uniform_location : require` under `#version` or else it will be error \
 `uniform explicit location requires GL_ARB_explicit_uniform_location and either GL_ARB_explicit_attrib_location or GLSL 3.30.` \
 More information [here](https://stackoverflow.com/a/38146938/571227).
 
@@ -90,6 +90,10 @@ location but multiples.
 
 * Added a note about special care when using explicit define location via `layout (location = ...)`
 with `uniform` variable inside GLSL.
+
+`Aug, 7, 2019`
+
+* Fixed missing `#` in front of `extension GL_ARB_explicit_uniform_location ...`.
 
 \
 \
