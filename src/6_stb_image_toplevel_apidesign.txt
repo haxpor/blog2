@@ -1,0 +1,52 @@
+stb_image - Top level API Design
+=========================================================
+
+A short note about [stb_image](https://github.com/nothings/stb/blob/master/stb_image.h) after I
+integrated into my studying project. I can see how flexible and ease in integration as advertised
+towards your own stuff i.e. game engine, or game.
+
+Let's look at design approach `stb_image` used to achieve such result.
+
+It is
+
+1. **a single header library**
+
+    Minimize the issue in including arbitrary library into your build system, no need to modify
+    or customize your build system to satisfy such library.
+
+    This means such library is designed and implemented in well supported way i.e. compiler, normal
+    standard programming language's features in used, etc.
+2. **utilizing preprocessor to help**
+
+    A single header file needs to have both function prototypes, and their implementation co-living
+    together. Thus duplicately include such header will result in conflict of existing function already
+    defined, that sort of things. `stb_image` uses preprocessor i.e. `#define STB_IMAGE_IMPLEMENTATION`
+    to be defined before including its header file to let it knows to include its implementation code
+    at the point of inclusion as well.
+
+    So use the following at a single point in your game engine, or game.
+
+    ```
+    #define STB_IMAGE_IMPLEMENTATION
+    #include "stb_image.h"
+    ```
+
+    Use the following when any source file in your game engine, or game need to use such library's
+    functionality.
+
+    ```
+    #include "stb_image.h"
+    ```
+    
+    Additional note, as `stb_image` has several of `inline` functions such it's necessary to have
+    its corresponding implementation code inside the header file; result in co-living of both
+    function prototypes and implementations. In case you want to separate this into header, and
+    implemlentation file, then there are a few ways to do this as follows.
+
+    1. Have additional preprocesor for user to `#define ...` thus include such relevant section of code
+    in proper place
+    2. A library is designed in non-single header, but instead it is header + implementation file.
+
+\
+\
+`First published on Aug, 13, 2019`
