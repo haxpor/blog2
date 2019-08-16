@@ -21,6 +21,7 @@ BROWSER=firefox
 PUBLISHED_DATE_PATTERN="First published on "
 
 # colors
+YELLOW='\033[93m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
@@ -94,7 +95,10 @@ list_allposts() {
         pub_string=$(tail "$file" | grep "$PUBLISHED_DATE_PATTERN");
         pub_string=${pub_string:19:-1};
 
-        printf "%40s  ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$pub_string"
+        # get title string from source file
+        title=$(head -1 "$file")
+
+        printf "%40s ${YELLOW} %50s ${NC} ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$title" "$pub_string"
     done
 }
 
