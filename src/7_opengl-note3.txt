@@ -1,0 +1,35 @@
+OpenGL Notes 3 - Textures
+=========================================================
+
+Following is the relevant OpenGL functions that involved in implementing *textures* related functionality.
+
+OpenGL Functions| Purpose
+-----|------------------------------------------------
+`glTexParameter()`|Configure relevant texture's parameters option
+`glGenTextures()`|Create texture object(s)
+`glBindTexture()`|Bind texture object for subsequent OpenGL operations
+`glTexImage2D()`|Specify texture data for speicify mipmap level
+`glGenerateMipmap()`|Generate full-chain of mipmap for all mipmap levels
+`glVertexAttribPointer()`|Define a generic vertex attribute data
+`glEnableVertexAttribArray()`|Enable vertex attrib array
+`glActiveTexture()`|Set texture object to be active
+
+Intersting notes are as follows (with relevant topic prefixed for each one)
+
+Topic          | Note                                   
+------|----------------------------------------------------------
+`Misc`|We can directly specify vertices' position in NDC space so no further transformation should be done in vertex shader; thus it just passes through the information to next stage.
+`Misc` |Texture filtering `GL_NEAREST` select which pixel's center is closest to the texture coordinate, but `GL_LINEAR` (or *bilinear filtering*) will take interpolated values from texture coordinates of nearby texels then use them to calculate mixed color of final pixel color
+`Mipmap`|Mipmapping operation to select which pixels to show on screen will happen when there is minifying (zoom-out). You can check this on man page of `glTexParameter()` and check its `GL_TEXTURE_MIN_FILTER` which has available values related to mipmap, but not for `GL_TEXTURE_MAG_FILTER`.
+`Mipmap`|When creating texture object, users can manually set which mipmap level should be based and its quality level via `glTexParameter()` for its `GL_TEXTURE_BASE_LEVEL`, `GL_TEXTURE_MIN_LOD` and `GL_TEXTURE_MAX_LOD`.
+`Mipmap`|Users have option to load all mipmap-level data from texture i.e. DDS texture, or let OpenGL automatically generates via `glGenerateMipmap()`
+`Shader`|As per *Explicit uniform location* section [here](https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)) we cannot define uniform variable with the same *location* at multiple location in different stage of shader i.e. both at vertex and fragment shader even though they both have the same type and name. This makes it more difficult to work with in case of explicit defining uniform location. Solution is to define its *location* at one place, then duplicate its definition without location but with same type and name in other shader stages.
+`Misc`|Use `glActiveTexture()` as needed especially when users need to deal with multiple textures setup in shader. This is to let OpenGL knows which current active texture object for subsequent OpenGL operations it will be working with.
+
+## Resource
+
+* [learnopengl.com - Textures](https://learnopengl.com/Getting-started/Textures)
+
+\
+\
+`First published on Aug, 16, 2019`
