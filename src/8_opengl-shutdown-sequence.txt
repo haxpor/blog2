@@ -1,0 +1,26 @@
+OpenGL Shutting Down Sequence
+=========================================================
+
+Usually we might not need to explicitly do this to fully clean up full-chain of OpenGL context
+which ranges from VBO, VAO, texture objects, disabling all enabled vertex attribute arrays, or even
+pragamatic setting variable to `NULL` or `0`.
+
+Most likely after the program quits, it will be automatically destroyed and returned back claimed
+memory to OS. But some says we cannot be relied on such behavior as it might not happen cleanly.
+
+So here is the sequence in shutting down or destroying sequence sequence of OpenGL.
+
+1. Disable all vertex attribute arrays via `glDisableVertexAttribArray()`
+2. Delete all related buffers included  (but not limited to) VBOs via `glDeleteBuffers()`
+3. Reset binded texture object via `glBindTexture(GL_TEXTURE_2D, 0)` and other binding targets i.e. 
+`GL_TEXTURE_1D`, `GL_TEXTURE_3D`, and so on.
+
+    > **Note:** Reset currently using program via `glUseProgram(0)` will result in undefined behavior
+    > as noted in its man page "`If program is zero, then the current rendering state refers to an invalid program object and the results of shader execution are undefined. However, this is not an error.`".
+4. Delete all texture objects via `glDeleteTextures()`
+5. Delete all shader programs via `glDeleteProgram()`
+6. Delete all VAOs via `glDeleteVertexArrays()`
+
+\
+\
+`First published on Aug, 16, 2019`
