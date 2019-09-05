@@ -1,0 +1,99 @@
+Smart Pointers C++
+=========================================================
+
+Each of section contains two notes
+
+1. Interesting and notable notes about such smart pointer
+2. Issue along with detail on using such smart pointer
+
+<br/>
+
+# `auto_ptr`
+
+<br/>
+
+Note | Detail
+----------------|--------------------------------------------------------
+`reset()`|Destroy managed object, then set managed object pointer to `0`.
+`reset(ptr)`|Destroy managed object if `ptr` doesn't equal to its managed object pointer, then set managed object pointer to `ptr`. `ptr` is of the same type of managed object.
+`release()`|Save a copy of managed object pointer and return, but prior to that set its managed object pointer to `0`.
+`reset(release())`|Set managed object pointer to `0` but **not** destroy it. This semantics means release ownership of managed object. It's called when `operator=` is called or per say assign new value to it.
+`operator->`|Return pointer to managed object, so we can call managed object's function right after.
+`operator*`|Return reference to managed object
+
+<br/>
+
+<font color="red">Issue</font> | Detail
+----------------|--------------------------------------------------------
+Transfer Ownership | When `auto_ptr` gets assigned to a new value, then ownership is transfered to `lhs` in which internally it calls `reset(release())` which means only reset its managed object pointer but **not** destroy it.
+Not support array of objects | Internally it uses `delete` to destroy managed object when it goes out of scope, if users created object with i.e. `new T[10]` then 
+Not work with standard containers | Due to its copy semantics which will transfer ownership to `lhs`, and release its own ownership. Thus this doesn't work well with standard containers as elements should be able to move around, and are not too early destroyed unexpectedly.
+
+<br/>
+
+# `unique_ptr`
+
+<br/>
+
+Note | Detail
+----------------|--------------------------------------------------------
+Kindof replacement to `auto_ptr` | `auto_ptr` is a valiant attempt to create a `unique_ptr` before C++ had move semantics.
+Can be empty | It can own no object which called empty.
+Requirements | It satisfies the requirement of `MoveConstructible`, and `MoveAssignable` but not the requirement of either `CopyConstructible` or `CopyAssignable`. Notice that the latter twos are marked with `= delete` in its declarations.
+Can't copy but move | It only can move, but not copy. As its copy constructor, and copy assignment operator are disabled (marked with `= delete`). This helps to guarantee that at any moment in time, only one `unique_ptr` owns the managed object.
+Support single or array of objects | Its constructor supports both of dynamically allocated of a single (via `new`) or array of objects (via `new []`).
+Can be used in standard containers | Compatible to be used with standard containers like `std::vector`, or others
+Exclusive ownership | It has an exclusive (only itself) ownership over managed object.
+
+<br/>
+
+# `shared_ptr`
+
+<br/>
+
+Note | Detail
+----------------|--------------------------------------------------------
+Self-made garbage collector | It's based on reference counting. When reference count reaches `0` then managed object get destroyed via (by default) `delete`.
+`make_shared`| Whenever possible try to use `std::make_shared` to create `shared_ptr`, the important thing is it provides efficient in creating `shared_ptr` to have both managed object living alongside meta bookkeeping data in the same single area of memory space. Anyway, `make_shared` doesn't support custom `deleter`, thus in that case users fall back to directly use `shared_ptr`.
+Dereferences | It provides `*` and `->` for dereference to managed object(s).
+`unique()` | A function to check whether the resource being managed is only managed by itself or per se `use_count() == 1`.
+`operator bool` | It can be used to check whether such `shared_ptr` has managed object in managed, or per say `*this` and `get()` != `nullptr`. Example giving `p` is `shared_ptr` then we can do `if (p) { std::cout << "p has managed object and still alive"; }`.
+Sharing group | All `shared_ptr` share the same reference count belong to the same group. `shared_ptr` can be in the same group when it created from `shared_ptr` that point to the same managed object, or being the first one that created directly with such managed object. See 1.
+`deleter` | If created from `unique_ptr`, it will get `deleter` from it.
+`operator=` with move semantic | If use `operator=` with move semantics in which it accepts `auto_ptr`, `unique_ptr` and `shared_ptr` wheres each one can be used to create a new `shared_ptr` object, finally it will assign itself via copy assignment operator.
+
+<br/>
+
+<font color="red">Issue</font> | Detail
+----------------|--------------------------------------------------------
+By default, not support array of objects' destruction | It uses `delete` to delete managed object by default. Anyway, users has option to supply array of objects to be managed by `shared_ptr`, but it's users' responsiblity to also supply `deleter`. This is only possible with `shared_ptr` not `make_shared`.
+^1^ Multiple `shared_ptr` should not created from the same nake pointer | Special care needed here. Problem will arise for the case when multiple `shared_ptr` created from the same nake pointer created else where not immediately inside function argument of `shared_ptr`. It's ok if one of `shared_ptr` created with such nake pointer, but the less must not do that to avoid multiple time deleting managed object resulting in undefined behavior. Instead the less of `shared_ptr` should created from `shared_ptr` created with such nake pointer. Also we should not ever touch that nake pointer directly again, let `shared_ptr` do the job.
+Cyclic reference | Resources won't be released properly if there's cyclic reference i.e. object A has its member variable as `shared_ptr` points to object B which in turns also has its member variable as `shared_ptr` points to object A. This creates cyclic reference and will cause memory leak problem. It can be solved by using `weak_ptr` on either object A or B.
+
+# `weak_ptr`
+
+<br/>
+
+Note | Detail
+----------------|--------------------------------------------------------
+Sharing semantics | It provides sharing semantics, not owning semantics.
+`lock()` | Created `shared_ptr` that shares ownership of managed object. Use this function to gain access to the managed object.
+`operator=` | Replace managed object with the one managed by `rhs` of `weak_ptr`. After this, it will shared the same managed object, as well as reference count. It can be used with either `weak_ptr` or `shared_ptr`.
+`use_count` | Get number of `shared_ptr` that shares the same managed object.
+Memory layout | `weak_ptr` has similar memory layout to `shared_ptr` that it stores control block and stored pointer of `shared_ptr` it created from at the same memory block.
+Solve cyclic reference | `weak_ptr` can be used to solve cyclic reference problem.
+
+<br/>
+
+## Misc Notes
+
+* `unique_ptr` can be converted into `shared_ptr` by using move assignment operator. But `shared_ptr` cannot be converted back to `unique_ptr`.
+* `weak_ptr` can be converted into `shared_ptr` by using `weak_ptr::get()`. It will create a new `shared_ptr`.
+* Demo `auto_ptr` usage can be found at [AutoPtr_SmartPointer.cpp](https://github.com/haxpor/cpp_st/blob/master/AutoPtr_SmartPointer.cpp).
+* Demo `unique_ptr` usage can be found at [UniquePtr_SmartPointer.cpp](https://github.com/haxpor/cpp_st/blob/master/UniquePtr_SmartPointer.cpp).
+* Demo `shared_ptr` usage can be found at [SharedPtr_SmartPointer.cpp](https://github.com/haxpor/cpp_st/blob/master/SharedPtr_SmartPointer.cpp).
+* Demo `weak_ptr` usage can be found at [WeakPtr_SmartPointer.cpp](https://github.com/haxpor/cpp_st/blob/master/WeakPtr_SmartPointer.cpp).
+ 
+\
+\
+`First published on Sep, 6, 2019`
