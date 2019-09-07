@@ -1,0 +1,159 @@
+Ways to Accept Program's Arguments in C/C++
+=========================================================
+
+While I was solving some problem sets on Hackerrank, one curiosity pops up of what might be happening
+for the program to accept external sample input test cases before executing to see its expected result.
+
+The point is Hackerrank doesn't use a obvious way to accept arguments, but instead rely on `scanf` or
+`std::cin`. I did further research and testing. This writeup is a result. Here I present you various
+ways to accept program's arguments in C/C++. 
+
+## 1. Main's arguments
+
+We always see the following boilerplate code
+
+```
+int main(int argc, char* argv[])
+{
+    ...
+}
+```
+
+that is the main way to accept program's arguments from external. So users can execute the program
+and supply parameters at the same time.
+
+```
+./myProgram.out param1 param2
+```
+
+and in terms of code, `argc` tells us how many parameters sending in included the first one which
+is the name of the program (`./myProgram.out` itself). `argc` is 3 in this case.
+
+We can access actual value for each one via `argv` i.e. `argv[0]` is `./myProgram.out`, `argv[1]` =
+`param1` and so on.
+
+## 2. Standard Input
+
+Standard input in C is `scanf()`, and `std::cin` for C++.
+
+This is the most **interesting** way to accept program's arguments. We can also take advantage of
+OS support for piping external input into the program, pipe output from one program to be an input
+of another. This makes it very convenient and flexible especially for competitive programming and
+platform such as Hackerrank to be able to operate. Thus allows it to accept submitted source code
+from users before compiling and executing with various several input test-cases.
+
+Let's imagine if *input* requirement of a program is two numbers separated by space like below
+
+```
+1 5
+```
+
+and *output* requirement is a result of addition of those two numbers like below
+
+```
+6
+```
+
+With above two requirements of input and output, we then call `scanf()` or `std::cin` for number
+of times matching with input requirement. So the complete program would be as follows
+
+### C program
+
+```
+#include <stdio.h>
+
+int main(int argc, char* argv[])
+{
+    int a, b;
+    scanf("%d %d", &a, &b);
+    printf("%d", a + b);
+    return 0;
+}
+```
+
+### C++ program
+
+```
+#include <iostream>
+
+int main(int argc, char* argv[])
+{
+    int a, b;
+    std::cin >> a >> b;
+    std::cout << (a + b);
+    return 0;
+}
+```
+
+As mentioned about taking advantage of OS support for piping, we can do the following
+
+```
+echo "1 5" | ./myProgram.out
+```
+
+Above will send in `1 5` as input string into `myProgram.out`, and either `scanf()` or `std::cin`
+will be able to read from it properly.
+
+Not only that, we can pipe input from file as follows
+
+```
+./myProgram.out < input.txt
+```
+
+wheres content of `input.txt` contains either oneline of input string
+
+```
+1 5
+```
+
+or multiple lines like
+
+```
+1
+5
+```
+
+It will work the same!
+
+So imagine further that we can pipe output from `myProgram.out` to be an input of another in chain
+like following
+
+```
+input.txt > ./myProgram.out | ./myProgram2.out | ./myProgram3.out
+```
+
+That's amazing.
+
+## 3. Change stream buffer of `std::cin` (C++ only)
+
+As a bonus, we can change stream buffer `std::basic_ios::rdbuf`~[ref](https://en.cppreference.com/w/cpp/io/basic_ios/rdbuf)~
+which is the upper class[^1] that `cin` inherits from.
+
+Just set `std::cin`'s `rdbuf` to whatever stream you want to read from i.e. file stream.
+
+```
+...
+
+// content we want to read from via std::cin
+std::ifstream fileIn("res/sample_input.txt");
+
+// save pointer to stream buffer of std::cout
+auto coutSBuf = std::cin.rdbuf();
+
+// substitute internal std::cout buffer with buffer of fileIn
+std::cin.rdbuf(fileIn.rdbuf());
+
+// read content from std::cin into a string
+std::string readString;
+std::cin >> readString;
+std::cout << readString << std::endl;
+
+...
+```
+
+\
+\
+`First published on Sep, 8, 2019`
+
+[^1]: See an overview of class inheritance and relationship of I/O related, and stream buffer classes in C++ [here](https://www.ntu.edu.sg/home/ehchua/programming/cpp/cp10_IO.html) \
+
