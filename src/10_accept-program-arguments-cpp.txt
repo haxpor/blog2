@@ -151,9 +151,20 @@ std::cout << readString << std::endl;
 ...
 ```
 
+## (Extra) 4. Change stream buffer of `stdout` and `stdin` (C only)
+
+It's possible to do similar in C only as well. It can be done via `freopen()` and optinal with the help of `dup()` to set back stream buffer.
+Anyway it's by no mean reliable and portable, thus I'm not showing any source code example here. You can take a look for more information [here](https://stackoverflow.com/questions/1908687/how-to-redirect-the-output-back-to-the-screen-after-freopenout-txt-a-stdo), and [here](http://c-faq.com/stdio/undofreopen.html).
+
+In short, better use `fscanf()` or `fprintf()` everywhere as we can control which stream buffer to input or output, thus we can set back any stream buffer under control at will, at anytime. See this [solution](https://stackoverflow.com/a/1910044/571227) for more information on example code.
+
 \
 \
 `First published on Sep, 8, 2019`
+
+`Sep, 9, 2019`
+
+* `Added (Extra) 4.`
 
 [^1]: See an overview of class inheritance and relationship of I/O related, and stream buffer classes in C++ [here](https://www.ntu.edu.sg/home/ehchua/programming/cpp/cp10_IO.html) \
 
