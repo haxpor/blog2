@@ -1,0 +1,47 @@
+Portable Way to Define Maximum Value for Unsigned Integer
+=========================================================
+
+I found this technique by chance.
+
+If you take a look at man page of `std::basic_string::npos`~[ref](https://en.cppreference.com/w/cpp/string/basic_string/npos)~,
+you will fine detail of a technique to define a maximum value for unsigned integer type in which it is `size_type`.
+
+Basically you assign `-1` to unsigned integer type variable to assign a maximum value to it. This is
+due to *signed-to-unsigned implicit conversion*, and it is *portable* way to do it.
+
+Consider the following test C++ program I've conducted
+
+```
+#include <iostream>
+#include <limits>
+
+int main()
+{
+    std::cout << "sizeof(unsigned int) = " << sizeof(unsigned int) << std::endl;
+    std::cout << "maximum value of unsigned int (from std::numberic_limits<unsigned int>::max()): " << std::numeric_limits<unsigned int>::max() << std::endl;
+    unsigned int maxValue = -1;
+    std::cout << "maximum value of unsigned int (from -1 technique): " << maxValue << std::endl;
+    std::cout << "equal?: " << std::boolalpha << (maxValue == std::numeric_limits<unsigned int>::max()) << std::endl;
+    return 0;
+}
+```
+
+You can get minimum and maximum value of certain integer type via `std::numeric_limits`. So above program
+get such value from it, and validate whether maximum value is equal to assigning `-1` technique.
+
+It is **equal**.
+
+The following is output of the program
+
+```
+sizeof(unsigned int) = 4
+maximum value of unsigned int (from std::numberic_limits<unsigned int>::max()): 4294967295
+maximum value of unsigned int (from -1 technique): 4294967295
+equal?: true
+```
+
+For reference, source code is hosted [here](https://github.com/haxpor/cpp_st/blob/master/PortableMaxValForUnsignedType.cpp).
+
+\
+\
+`First published on Sep, 29, 2019`
