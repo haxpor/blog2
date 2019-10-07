@@ -1,0 +1,54 @@
+C++ Multithreading Note
+=========================================================
+
+Following is the summary note categorizing into different category of STL functions related to multithreading
+programming in C++ upon my studying. There is also example code demonstrating some of its usage as well as noted.
+
+## Locking Stategy
+
+STL Functions | Note
+----------------|--------------------------------------------------------
+`std::deter_lock`|Do not acquire ownership of the mutex. Defer locking. Use when users want to create a mutex-lock (for example `std::lock`, `std::unique_lock`) without owning the mutex before actually create ones that own it; note that we can specify `locking strategy` via mutex wrappers (i.e. `std::lock_guard`, `std::unique_lock`)' constructor's parameter.
+`std::try_to_lock`|Try to acquire ownership of the mutex without locking. It call `std::mutex::try_lock` at the constructor method to determine whether it should own such `std::mutex` or not.
+`std::adopt_lock`|Assume the calling thread already has ownership of the mutex (assume previously locked).
+
+## Locks (Mutex Wrapper)
+
+STL Functions | Note
+----------------|--------------------------------------------------------
+`std::lock_guard`|Mutex lock which will automatically unlock itself at the end of the block scope.
+`std::unique_lock`|Similar to `std::lock_guard` but provides optional flexibility to manually lock and unlock manually.
+`std::shared_lock`|Used in situation of several readers, but one writer, so readers can share a single mutex.
+`std::scoped_lock`|Enhanced version of `std::lock_guard` but supports multiple mutuxes at once using deadlock avoidance algorithm.
+
+## Utility
+
+STL Functions | Note
+----------------|--------------------------------------------------------
+`std::lock`|Acquire locks from multiple mutexes by using deadlock avoidance algorithm.
+
+## Atomic
+
+STL Functions | Note
+----------------|--------------------------------------------------------
+`std::atomic`|Hold the atomic object for performing `atomic` operations. Due to its implementation, it **do not** guarantee lock-free. Atomic relies on CPU features and ability.
+`std::atomic_flag`|Lower level of atomic operation with major difference that it guarantees **lock-free** but doesn't provide any load and store operation.
+
+## Core
+
+STL Functions | Note
+----------------|--------------------------------------------------------
+`std::mutex`|The meat of everything. It's the basic for almost parts of multithreading programming environment dealing with C++. Deep down inside it's implemented with atomic operation; thus mutex itself doesn't need another mutex to achieve the goal.
+`std::recursive_mutex`|Recursive version of mutex. It allows *unspecified* number of `lock()` call on itself if locked already, until `std::system_error` will be thrown. Thus it allows to be locked even though it's already locked but we cannot control how many times it can do just that.
+`std::condition_variable`|A logic control to allow other thread(s) to wait for a condition to be true and notified by a thread which is able to modity a value affecting the logic condition, and notify other thread(s). It can be worked with only `std::unique_lock` for performance reason.
+`std::condition_variable_any`|Same as `std::condition_variable` but relax such requirement to allow it to work with any locks.
+`std::shared_timed_mutex`|Optimized version upon `std::unique_lock` especially for situation of several readers, and one writer. It will usually work better than using `std::unique_lock`, but if it's just a few of readers, no significant performance gained thus it's still advised to use `std::unique_lock`.
+
+## Async/Task
+
+STL Functions | Note
+----------------|--------------------------------------------------------
+`std::async`|Execute a function on newly spawned thread (via `std::launch::async`), or on the calling thread only the first time to compute its result (via `std::launch::deferred`). It return `std::future` which we use `std::future::get()` to retrieve the result. **Note:** Its destructor is blocked to properly destroy all its shared data and states. Only `std::future` created from this way will block the call (in its destructor). 
+`std::promise`|Similar to `std::async` but allow users flexibility to fullfil resultant `std::future` as created by it later separately rather than at the end of function call. It is used by producer/writer of asynchronized operation. Internally it uses `std::condition_variable` to notify the associated `std::future`.
+`std::packaged_task`|Suitable for sending it into other classes, then execute later. Same as `std::promise` which allows such task to be executed later.
+`std::future`|Resultant mechasnim in getting result from other means. All those `std::async`, `std::promise`, and `std::packaged_task` return `std::future` either immediately in case of `std::async` or via `get_future()` in case of the other twos. It is used by consumer/reader operation.
