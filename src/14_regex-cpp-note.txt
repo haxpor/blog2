@@ -60,10 +60,11 @@ covers usage of basic building-block of working with regex in C++ namely
 3. `std::match_results` for matching results
 
 Topic | URL
-----------------|--------------------------------------------------------
+-----------------------------------|--------------------------------------------------------
 `std::regex_match`|[Regex_RegexMatch.cpp](https://github.com/haxpor/cpp_st/blob/master/Regex_RegexMatch.cpp)
 `std::regex_search`|[Regex_RegexSearch.cpp](https://github.com/haxpor/cpp_st/blob/master/Regex_RegexSearch.cpp)
 `std::regex_replace`|[Regex_RegexReplace.cpp](https://github.com/haxpor/cpp_st/blob/master/Regex_RegexReplace.cpp)
+`Attribute Parser - Hackerrank Problem`|[AttributeParser.cpp](https://github.com/haxpor/hackerrank-sol/blob/master/Practice/C%2B%2B/Strings/AttributeParser.cpp)
 
 \
 \
