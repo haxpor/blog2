@@ -1,0 +1,70 @@
+Regex C++ Note
+=========================================================
+
+Below is my summary note over regular expression (regex) library as provided in C++ standard.
+
+## Generic Objects
+
+These are generic type in which there are specialized type (noted as ~(specialized)~ in subsequent sections below) users will directly work with.
+
+STL Functions | Note
+----------------|--------------------------------------------------------
+`std::basic_regex`|Holds regex string used in regular expression operation. By default it's created by using ECMAScript syntax. It provides with quite options to choose from namely `basic`, `extended`, `awk`, `grep`, `egrep`, and `ECMAScript`.
+`std::sub_match`|We don't use it directly, but used by regex engine itself to mark and denote the sequences of characters matched by input regex string.
+`std::match_results`|Matching results which we directly work with. It holds a collection of `std::sub_match` as result we can make use of. It provides more meta information like `prefix`, `suffix`, `size` of matching result, and random access to each matching result for convenient in iterating through the collection.
+
+## Operations
+
+STL Functions | Note
+----------------|--------------------------------------------------------
+`std::regex_match`|Process the input string to determine whether it matches the **entire** target character sequence.
+`std::regex_search`|Process the input string to determine whether it matches **some** of the subsequence character sequence.
+`std::regex_replace`|Perform replacing the target input string according to regex string.
+
+## Regex String ~(specialized)~
+
+All of these are typedef-ef from `std::basic_regex` with different types.
+
+STL Functions | Note
+----------------|--------------------------------------------------------
+`std::regex`|It's typedef-ed from `typedef basic_regex<char>   regex;` Basically works with ASCII character type.
+`std::wregex`|It's typedef-ed from `typedef basic_regex<wchar_t>    regex;` Basically works with wide-character (character that needs multiple bytes to represent i.e. CJK charcter etc).
+
+## Matching Results ~(specialized)~
+
+All of these are typedef-ef from `std::match_results` with different types.
+
+STL Functions | Note
+----------------|--------------------------------------------------------
+`std::cmatch`|It's typedef-ed from `typedef match_results<const char*>  cmatch;` Basically works with C-style string of ASCII type.
+`std::smatch`|It's typedef-ed from `typedef match_results<string::const_iterator>   smatch;` Basically works with C++ - style string. Use `const_iterator` to provide features from `std::iterator`.
+`std::wcmatch`|It's typedef-ed from `typedef match_results<const wchar_t*>   wcmatch;` Basically works with C-style string of wide-character type `wchar_t`.
+`std::wsmatch`|It's typedef-ed from `typedef match_results<wstring::const_iterator>  wsmatch;` Basically works with C++ - style string of wide-character type. Use `const_iterator` to provide features from `std::iterator`.
+
+## Sub-matching Result ~(specialized)~
+
+STL Functions | Note
+----------------|--------------------------------------------------------
+`std::csub_match`|It's typedef-ed from `typedef sub_match<const char*>   csub_match;` Basically works with C-style string of ASCII type.
+`std::ssub_match`|It's typedef-ed from `typedef sub_match<string::const_iterator>   ssub_match;` Basically works with C++ - style string. Use `const_iterator` to provide features from `std::iterator`.
+`std::wcsub_match`|It's typedef-ed from `typedef sub_match<const wchar_t*>  wcsub_match;` Basically works with C-style string of wide-character type `wchar_t`.
+`std::wssub_match`|It's typedef-ed from `typedef sub_match<wstring::const_iterator>  wssub_match;` Basically works with C++ - style string of wide-character type. Use `const_iterator` to provide features from `std::iterator`.
+
+## Code Examples
+
+I've done demonstration code in using regex. Each topic focuses on *Operations* which in itself
+covers usage of basic building-block of working with regex in C++ namely
+
+1. `std::regex` for regex string
+2. `std::regex_...` for operations i.e. `std::regex_match`, `std::regex_search`, and `std::regex_replace`
+3. `std::match_results` for matching results
+
+Topic | URL
+----------------|--------------------------------------------------------
+`std::regex_match`|[Regex_RegexMatch.cpp](https://github.com/haxpor/cpp_st/blob/master/Regex_RegexMatch.cpp)
+`std::regex_search`|[Regex_RegexSearch.cpp](https://github.com/haxpor/cpp_st/blob/master/Regex_RegexSearch.cpp)
+`std::regex_replace`|[Regex_RegexReplace.cpp](https://github.com/haxpor/cpp_st/blob/master/Regex_RegexReplace.cpp)
+
+\
+\
+`First published on Sep, 29, 2019`
