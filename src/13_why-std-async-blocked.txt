@@ -1,0 +1,26 @@
+Why std::async Blocked?
+=========================================================
+
+There is an only kind of `std::future` as resultant from creation from Async/Task STL function calls
+that is blocked. It is the one created by `std::async`. This post will illustrate why it it like it is.
+
+The reason why `std::future` created from `std::async` will block in its destructor is because of
+`__future_base::_S_make_async_state()` function call which in turn calls to create `_Async_state_impl`
+in which its destructor has the following definition (notice its call `std::thread::`join` if
+it's joinable to wait until the task is done to properly destroy itself.
+
+```
+      // Must not destroy _M_result and _M_fn until the thread finishes.
+      // Call join() directly rather than through _M_join() because no other
+      // thread can be referring to this state if it is being destroyed.
+      ~_Async_state_impl() { if (_M_thread.joinable()) _M_thread.join(); }
+```
+
+Pay a good attention at `_Async_state_impl` which is mentioned only to work with `std::async` with
+`std::launch::async` only, and not other where else.
+
+> Above code can be seen in `future` header file bundled with gcc 9.0 on Linux, or similar on other platforms.
+
+\
+\
+`First published on Oct, 8, 2019`
