@@ -1,0 +1,45 @@
+C++ STL Containers Note
+=========================================================
+
+This post illustrates my studying upon STL containers in C++ standard categorized in its type.
+
+## Associative Container
+
+STL Names | Impl | Note
+----------------|---------------|-----------------------------------
+`std::set`| Red-black tree |Contains a sorted set of unique objects
+`std::map`| Red-black tree |Contains key-value pairs with unique keys.
+`std::multiset`| Red-black tree, B+Tree |Contains a sorted set of objects but allowed multiple of equivalent objects.
+`std::multimap`| Red-black tree | Contains key-value pairs but allowed equivalent of keys.
+
+## Unordered Associative Container
+
+STL Names | Impl | Note
+----------------|-----------------|-----------------------------------
+`std::unordered_set`| hashmap with external linked-list to store elements | Hashmap whose hashing function operates on the values directly. It allows only unique values (as keys)
+`std::unordered_map`| same | Hashmap whose hashing function operates on keys. It allows only unique keys.
+`std::unordered_multiset`| same | Same as `std::unordered_set` but allows equivalent of values as keys.
+`std::unordered_multimap`| same | Same as `std::unordered_map` but allows euiqvalent of keys.
+
+## Sequence Container
+
+STL Names | Impl | Note
+----------------|-----------------|-----------------------------------
+`std::array`| fixed-size array | Based on top of fixed-size raw array but provide meta information accessible in object-oriented way i.e. `size`, `back`, `front`, or directly access to raw array via `data`.
+`std::vector`| growable with contiguous array | Growable with contiguous array. Special note, `std::vector<bool>` is specialized template with subset feature of `std::vector` to provide optimized memory allocation and usage as it packs data as per 1-bit for bool data type; subset feature in this case refers to return by reference of individual element doesn't work as there is no addressable unit in term of bit but there is workaround to that by using `std::vector<bool>::reference` or `auto &&var = boolVector[2]` ~[ref](https://stackoverflow.com/questions/8399417/why-vectorboolreference-doesnt-return-reference-to-bool/8399942)~.
+`std::deque`| individually fixed-size allocated arrays with additional bookeeping | It's shorted for double-ended queue which provides ability to do fast insertion and deletion at either end, with also fast random-access.
+`std::list`| doubly-linked list | Provides fast insertion and deletion anywhere in the container. Fast random-access is not supported.
+`std::forward_list`| singly-linked list | Similar to `std::list` but provides more space efficient storage when bidirectional iteration is not needed.
+
+## Container Adaptor
+
+STL Names | Impl | Note
+----------------|-----------------|-----------------------------------
+`std::stack`| based on `std::deque` | Provides LIFO (last-in, first-out) data structure. It acts as a wrapper, and only a specific set of functions on top of `std::deque` is provided. Thus it only provides `push` (from `push_back`), `pop` (from `pop_back`), and `top` (from `back`).
+`std::queue`| based on `std::deque` | Provides FIFO (first-in, first-out) data structure. It acts as a wrapper, and only a specific set of functions on top of `std::deque` is provided. Thus it only provides `push` (from `push_back`), `pop` (from `pop_back`), `top` (from `back`), and `front` (from `front`).
+`std::priority_queue`| based on `std::vector` | Provides constant in lookup of the largest (by default) element. It's similar to heap which we can manually manage via other STL functions i.e. `std::make_heap`, `std::push_heap`, and `std::pop_heap` but with benefit of not to accidentally invalidate the heap.
+
+\
+\
+`First published on Oct, 8, 2019`
+
