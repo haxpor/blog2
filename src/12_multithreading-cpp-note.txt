@@ -6,7 +6,7 @@ programming in C++ upon my studying. There is also example code demonstrating so
 
 ## Locking Stategy
 
-STL Functions | Note
+STL Names | Note
 ----------------|--------------------------------------------------------
 `std::deter_lock`|Do not acquire ownership of the mutex. Defer locking. Use when users want to create a mutex-lock (for example `std::lock`, `std::unique_lock`) without owning the mutex before actually create ones that own it; note that we can specify `locking strategy` via mutex wrappers (i.e. `std::lock_guard`, `std::unique_lock`)' constructor's parameter.
 `std::try_to_lock`|Try to acquire ownership of the mutex without locking. It call `std::mutex::try_lock` at the constructor method to determine whether it should own such `std::mutex` or not.
@@ -14,7 +14,7 @@ STL Functions | Note
 
 ## Locks (Mutex Wrapper)
 
-STL Functions | Note
+STL Names | Note
 ----------------|--------------------------------------------------------
 `std::lock_guard`|Mutex lock which will automatically unlock itself at the end of the block scope.
 `std::unique_lock`|Similar to `std::lock_guard` but provides optional flexibility to manually lock and unlock manually.
@@ -23,20 +23,20 @@ STL Functions | Note
 
 ## Utility
 
-STL Functions | Note
+STL Names | Note
 ----------------|--------------------------------------------------------
 `std::lock`|Acquire locks from multiple mutexes by using deadlock avoidance algorithm.
 
 ## Atomic
 
-STL Functions | Note
+STL Names | Note
 ----------------|--------------------------------------------------------
 `std::atomic`|Hold the atomic object for performing `atomic` operations. Due to its implementation, it **do not** guarantee lock-free. Atomic relies on CPU features and ability.
 `std::atomic_flag`|Lower level of atomic operation with major difference that it guarantees **lock-free** but doesn't provide any load and store operation.
 
 ## Core
 
-STL Functions | Note
+STL Names | Note
 ----------------|--------------------------------------------------------
 `std::thread`|This is meat of everything as to run a task concurrently, one need to spawn a new thread although in certain case we run a task in the current thread.
 `std::mutex`|Also a meat of everything. It's the basic for almost parts of multithreading programming environment dealing with C++. Deep down inside it's implemented with atomic operation; thus mutex itself doesn't need another mutex to achieve the goal.
@@ -47,7 +47,7 @@ STL Functions | Note
 
 ## Async/Task
 
-STL Functions | Note
+STL Names | Note
 ----------------|--------------------------------------------------------
 `std::async`|Execute a function on newly spawned thread (via `std::launch::async`), or on the calling thread only the first time to compute its result (via `std::launch::deferred`). It return `std::future` which we use `std::future::get()` to retrieve the result. **Note:** Its destructor is blocked to properly destroy all its shared data and states. Only `std::future` created from this way will block the call (in its destructor). 
 `std::promise`|Similar to `std::async` but allow users flexibility to fullfil resultant `std::future` as created by it later separately rather than at the end of function call. It is used by producer/writer of asynchronized operation. Internally it uses `std::condition_variable` to notify the associated `std::future`.

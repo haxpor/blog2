@@ -7,7 +7,7 @@ Below is my summary note over regular expression (regex) library as provided in 
 
 These are generic type in which there are specialized type (noted as ~(specialized)~ in subsequent sections below) users will directly work with.
 
-STL Functions | Note
+STL Names | Note
 ----------------|--------------------------------------------------------
 `std::basic_regex`|Holds regex string used in regular expression operation. By default it's created by using ECMAScript syntax. It provides with quite options to choose from namely `basic`, `extended`, `awk`, `grep`, `egrep`, and `ECMAScript`.
 `std::sub_match`|We don't use it directly, but used by regex engine itself to mark and denote the sequences of characters matched by input regex string.
@@ -15,7 +15,7 @@ STL Functions | Note
 
 ## Operations
 
-STL Functions | Note
+STL Names | Note
 ----------------|--------------------------------------------------------
 `std::regex_match`|Process the input string to determine whether it matches the **entire** target character sequence.
 `std::regex_search`|Process the input string to determine whether it matches **some** of the subsequence character sequence.
@@ -25,7 +25,7 @@ STL Functions | Note
 
 All of these are typedef-ef from `std::basic_regex` with different types.
 
-STL Functions | Note
+STL Names | Note
 ----------------|--------------------------------------------------------
 `std::regex`|It's typedef-ed from `typedef basic_regex<char>   regex;` Basically works with ASCII character type.
 `std::wregex`|It's typedef-ed from `typedef basic_regex<wchar_t>    regex;` Basically works with wide-character (character that needs multiple bytes to represent i.e. CJK charcter etc).
@@ -34,7 +34,7 @@ STL Functions | Note
 
 All of these are typedef-ef from `std::match_results` with different types.
 
-STL Functions | Note
+STL Names | Note
 ----------------|--------------------------------------------------------
 `std::cmatch`|It's typedef-ed from `typedef match_results<const char*>  cmatch;` Basically works with C-style string of ASCII type.
 `std::smatch`|It's typedef-ed from `typedef match_results<string::const_iterator>   smatch;` Basically works with C++ - style string. Use `const_iterator` to provide features from `std::iterator`.
@@ -43,7 +43,7 @@ STL Functions | Note
 
 ## Sub-matching Result ~(specialized)~
 
-STL Functions | Note
+STL Names | Note
 ----------------|--------------------------------------------------------
 `std::csub_match`|It's typedef-ed from `typedef sub_match<const char*>   csub_match;` Basically works with C-style string of ASCII type.
 `std::ssub_match`|It's typedef-ed from `typedef sub_match<string::const_iterator>   ssub_match;` Basically works with C++ - style string. Use `const_iterator` to provide features from `std::iterator`.

@@ -10,7 +10,7 @@ Most of STL functions here defined in `<ctime>` header.
 
 ## Structures
 
-STL Functions | Note
+STL Names | Note
 ----------------|--------------------------------------------------------
 `std::tm`|Structure holding a calendar date and time broken down into its components.
 `std::time_t`|Arithmetic type capable of representing time. It's almost always an integral value holding the number of seconds (not counting leap seconds) since 00:00, Jan 1 1970 UTC, corresonding to POSIX time. Mostly use this to represent wall-clock time in precision of seconds.
@@ -18,7 +18,7 @@ STL Functions | Note
 
 ## Creating Time
 
-STL Functions | Note
+STL Names | Note
 ----------------|--------------------------------------------------------
 `std::mktime`|Convert a calender time `std::tm` to epoch time `std::time_t`.
 `std::localtime`|Convert an epoch time `std::time_t` to calendar time `std::tm` expressed in local time.
@@ -26,7 +26,7 @@ STL Functions | Note
 
 ## Getting Time
 
-STL Functions | Note
+STL Names | Note
 ----------------------|--------------------------------------------------------
 `std::time`|Get the current calendar time encoded as epoch time `std::time_t`. It will store the result in input `std::time_t` if input is not `NULL`. Be ware of 32-bit implementation of `std::time` will fail in the year 2038.
 `std::clock`|Get approximate processor time used by the process since the beginning of an implementation-defined related to the program's execution. Divide the result with `CLOCKS_PER_SEC` to get value expressed in seconds. Only difference between two values are meaningful. Note that time expressed in `std::clock` may advance faster than wall-clock if such process is multithreaded and more than one execution core is available, but it may advance slower if CPU is shared by other processes. In short, to measure execution time used by a process, use `std::clock` to precisely measure rather than use wall-clock like `std::time`.
@@ -35,14 +35,14 @@ STL Functions | Note
 
 ## Utility
 
-STL Functions | Note
+STL Names | Note
 ----------------------|--------------------------------------------------------
 `std::difftime`|Compute difference between twos epoch time `std::time_t` then return result in seconds. The first parameter is end-time, if not then the result is in negative.
 `std::strftime`|Format the input calendar time `std::tm`. See [std::strftime](https://en.cppreference.com/w/cpp/chrono/c/strftime) for detail on format string.
 
 ## Representation
 
-STL Functions | Note
+STL Names | Note
 ----------------------|--------------------------------------------------------
 `std::ctime`|Convert an epoch time `std::time_t` to calendar local time `std::tm` interally then return result in textual representation. It is the same as calling `std::asctime(std::localtime(time))`.
 `std::asctime`|Convert a calendar time `std::tm` to texture representation.
