@@ -99,6 +99,14 @@ Topic | URL
 
 * `std::unique_ptr` can be converted into `std::shared_ptr` by using move assignment operator. But `std::shared_ptr` cannot be converted back to `std::unique_ptr`.
 * `std::weak_ptr` can be converted into `std::shared_ptr` by using `std::weak_ptr::get()`. It will create a new `std::shared_ptr`.
+
+## Update
+
+`Oct, 14, 2019`
+
+* Fixed anchor link ^1^, typos, Code Examples format for consistency, prefixed with `std::` for consistency, and some wording to make it clearer.
+* Added missing information of using `delete[]` for array of objects for `std::auto_ptr`.
+* Added detail about `Lifetime` of `std::shared_ptr`.
  
 \
 \
