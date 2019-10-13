@@ -31,7 +31,8 @@ STL Names | Note
 `std::time`|Get the current calendar time encoded as epoch time `std::time_t`. It will store the result in input `std::time_t` if input is not `NULL`. Be ware of 32-bit implementation of `std::time` will fail in the year 2038.
 `std::clock`|Get approximate processor time used by the process since the beginning of an implementation-defined related to the program's execution. Divide the result with `CLOCKS_PER_SEC` to get value expressed in seconds. Only difference between two values are meaningful. Note that time expressed in `std::clock` may advance faster than wall-clock if such process is multithreaded and more than one execution core is available, but it may advance slower if CPU is shared by other processes. In short, to measure execution time used by a process, use `std::clock` to precisely measure rather than use wall-clock like `std::time`.
 `std::chrono::high_resolution_clock`|Get precise current wall-clock time (usually down to nanosecond at most). It's type alias from `std::chrono::system_clock` to represent the clock "with the shortest tick period" until higher-than-nanosecond definitions become feasible.
-`std::chrono::system_clock` ~extra~|Get precise current wall-clock time. It is the clock "with the shortest tick period".
+`std::chrono::system_clock`|Get precise current wall-clock time. It is the clock "with the shortest tick period". It's the only time which relates and is convertable to C-style time. It's *not* a monotonic clock thus can be adjusted by system if system time changes at any moment. So for mission critical in measuring intervals, better use `std::chrono::steady_clock`.
+`std::chrono::steady_clock`|It's a monotonic clock which is the most suitable one to be used for measuring intervals i.e. benchmarking. It is not affected / adjusted by system as the system time progresses, only move forward.
 
 ## Utility
 
@@ -52,6 +53,13 @@ STL Names | Note
 I've done demonstration code covering almost all above, see it at [DateTime.cpp](https://github.com/haxpor/cpp_st/blob/master/DateTime.cpp).
 
 Also note the top code comment on how to compile the program.
+
+## Update
+
+`Oct, 13, 2019`
+
+* Added clear note that `std::chrono::system_clock` is not the best option to use in measuring intervals for mission critical like benchrmarking.
+* Added `std::chrono::steady_clock` which is the right tool for measuring intervals; a monotonic clock.
 
 \
 \
