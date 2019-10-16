@@ -1,0 +1,38 @@
+Simple Lock-free std::cout in C++ Multithreading
+=========================================================
+
+Whenever you need to do a quick multithreading program in C++, most of the time printing something
+out via `std::cout::operator<<` to validate the logic is the most go-to solution.
+
+Whenever at least two threads call `std::cout::operator<<` at the same time, then console result will
+probably be mess, not what we exepct. Newline might not get printed, space sometimes included but other
+time not included, etc.
+
+Apply full `std::mutex` seems to be overkill. Anyway mutex solution is not *lock-free*. What's about
+`std::atomic`? Real close, but it still doesn't guarantee lock-free solution for us. So those two
+methods go out of the way.
+
+The sane solution is to use `std::atomic_flag`. Lower level than `std::atomic`. It's comparable to
+`std::atomic<bool>` but without load and store operation. See the following code
+
+```
+    static std::atomic_flag lock = ATOMIC_FLAG_INIT;
+
+    // spin-lock (suitable if short time waiting is known beforehand)
+    while (lock.test_and_set(std::memory_order_acquire))
+        ;
+
+    std::cout << "Print something\n";
+
+    // release the lock
+    lock.clear();
+```
+
+Check [ThreadLocal.cpp](https://github.com/haxpor/cpp_st/blob/master/ThreadLocal.cpp) for full example
+of multiple threads trying to print something out at the same time.
+
+Compile it with `g++ -std=c++11 ThreadLocal.cpp -lpthread`.
+
+\
+\
+`First published on Oct, 16, 2019`
