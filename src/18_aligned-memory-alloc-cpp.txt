@@ -1,0 +1,25 @@
+Aligned Memory Allocation in C++
+=========================================================
+
+This post contains the summary of the note about aligned memory allocation in C++.
+
+Names | Note
+------------------|-----------------------------------
+`alignof`| Built-in operator to get the native byte alignment of input type.
+`std::align`| Regard it as an *operation* to finding the starting memory location to place the target scalar, struct/class data onto the target memory buffer prior allocated before the call. Suitable to be used in custom allocator implementation working with external allocated buffer.
+`std::alignment_of`| Provide the *constant* value for alignment requirement for input type. Underlying it uses `alignof` operator to find such value. If type is array type, it returns the element type. If it's reference type, it returns the type which pointer refers to.
+`std::aligned_storage`| Regard it as an aligned data structure to hold any type. Underlying it uses *union* with two field members, one for backend data, and another for a trick to align the whole union. It bases on array of `unsigned char` thus users have to use `reinterpret_cast` to cast data to proper type to work with. Suitable to be used as building block of custom allocator implementation, thus no need to manually handle and define backend data to hold aligned bytes.
+`std::aligned_alloc` ~`C++17`~| Dynamically aligned allocate memory space with input of alignment size, and size to allocate. It came from C thus need to include `<cstdlib>`. Alternatively, it's possible to implement this ourselves see [mem.h](https://github.com/abzico/krr/blob/master/include/krr/foundation/mem.h)/[mem.c](https://github.com/abzico/krr/blob/master/src/foundation/mem.c).
+
+## Example Codes
+
+Topic | URLs
+----------------|--------------------------------------------------------
+`std::align`|Multiple types aligned allocator on stack - [Align.cpp](https://github.com/haxpor/cpp_st/blob/master/Align.cpp), Single type with improvement aligned allocator on stack - [Align2.cpp](https://github.com/haxpor/cpp_st/blob/master/Align2.cpp)
+`std::alignment_of`|[AlignmentOf.cpp](https://github.com/haxpor/cpp_st/blob/master/AlignmentOf.cpp)
+`std::aligned_storage`|[AlignedStorage.cpp](https://github.com/haxpor/cpp_st/blob/master/AlignedStorage.cpp)
+`std::aligned_alloc`|[AlignedAlloc.cpp](https://github.com/haxpor/cpp_st/blob/master/AlignedAlloc.cpp)
+
+\
+\
+`First published on Oct, 18, 2019`
