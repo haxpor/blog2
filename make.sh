@@ -98,7 +98,7 @@ list_allposts() {
         # get title string from source file
         title=$(head -1 "$file")
 
-        printf "%40s ${YELLOW} %50s ${NC} ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$title" "$pub_string"
+        printf "%60s ${YELLOW} %60s ${NC} ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$title" "$pub_string"
     done
 }
 
