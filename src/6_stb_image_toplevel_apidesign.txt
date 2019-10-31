@@ -24,12 +24,16 @@ It is
     to be defined before including its header file to let it knows to include its implementation code
     at the point of inclusion as well.
 
-    So use the following at a single point in your game engine, or game.
+    So use the following at **a single point** in your game engine, or game.
 
     ```
     #define STB_IMAGE_IMPLEMENTATION
     #include "stb_image.h"
     ```
+
+    > `stb_image` source also mentions about this at the top of its file. Only `#define STB_IMAGE_IMPLEMENTATION` and include
+    > the header at only *one* place. The point is that implementation can live at only one place.
+    > See [here](https://github.com/nothings/stb/blob/f67165c2bb2af3060ecae7d20d6f731173485ad0/stb_image.h#L4-L6).
 
     Use the following when any source file in your game engine, or game need to use such library's
     functionality.
@@ -46,6 +50,12 @@ It is
     1. Have additional preprocesor for user to `#define ...` thus include such relevant section of code
     in proper place
     2. A library is designed in non-single header, but instead it is header + implementation file.
+
+## Update
+
+`Oct, 31, 2019`
+
+* Added more info of how important defining `#define STB_IMAGE_IMPLEMENTATION` at one place mentioning to `stb_image` source. in 2.
 
 \
 \
