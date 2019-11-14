@@ -23,7 +23,7 @@ STL Names | Note
 
 ## Regex String ~(specialized)~
 
-All of these are typedef-ef from `std::basic_regex` with different types.
+All of these are typedef-ed from `std::basic_regex` with different types.
 
 STL Names | Note
 ----------------|--------------------------------------------------------
@@ -32,7 +32,7 @@ STL Names | Note
 
 ## Matching Results ~(specialized)~
 
-All of these are typedef-ef from `std::match_results` with different types.
+All of these are typedef-ed from `std::match_results` with different types.
 
 STL Names | Note
 ----------------|--------------------------------------------------------
@@ -42,6 +42,8 @@ STL Names | Note
 `std::wsmatch`|It's typedef-ed from `typedef match_results<wstring::const_iterator>  wsmatch;` Basically works with C++ - style string of wide-character type. Use `const_iterator` to provide features from `std::iterator`.
 
 ## Sub-matching Result ~(specialized)~
+
+All of these are typedef-ed from `std::sub_match` with different types.
 
 STL Names | Note
 ----------------|--------------------------------------------------------
@@ -65,6 +67,12 @@ Topic | URL
 `std::regex_search`|[Regex_RegexSearch.cpp](https://github.com/haxpor/cpp_st/blob/master/Regex_RegexSearch.cpp)
 `std::regex_replace`|[Regex_RegexReplace.cpp](https://github.com/haxpor/cpp_st/blob/master/Regex_RegexReplace.cpp)
 `Attribute Parser - Hackerrank Problem`|[AttributeParser.cpp](https://github.com/haxpor/hackerrank-sol/blob/master/Practice/C%2B%2B/Strings/AttributeParser.cpp)
+
+## Update
+
+`Nov, 15, 2019`
+
+* Fixed typo, and add info telling where sub-matching result typedef-ed from.
 
 \
 \
