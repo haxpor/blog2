@@ -1,6 +1,7 @@
 # Wasin's blog
 
-Migrated from old one https://blog.wasin.io to https://wasin.io/blog
+Migrated from [old one](https://blog.wasin.io) to https://wasin.io/blog
+
 See [BUILD.md](https://github.com/haxpor/blog2/blob/master/BUILD.md) on how to make use of build system
 for this blog.
 
