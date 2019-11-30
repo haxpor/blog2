@@ -52,7 +52,7 @@ STL Names | Note
 `std::async`|Execute a function on newly spawned thread (via `std::launch::async`), or on the calling thread only the first time to compute its result (via `std::launch::deferred`). It return `std::future` which we use `std::future::get()` to retrieve the result. **Note:** Its destructor is blocked to properly destroy all its shared data and states. Only `std::future` created from this way will block the call (in its destructor). 
 `std::promise`|Similar to `std::async` but allow users flexibility to fullfil resultant `std::future` as created by it later separately rather than at the end of function call. It is used by producer/writer of asynchronized operation. Internally it uses `std::condition_variable` to notify the associated `std::future`.
 `std::packaged_task`|Suitable for sending it into other classes, then execute later. Same as `std::promise` which allows such task to be executed later.
-`std::future`|Resultant mechasnim in getting result from other means. All those `std::async`, `std::promise`, and `std::packaged_task` return `std::future` either immediately in case of `std::async` or via `get_future()` in case of the other twos. It is used by consumer/reader operation.
+`std::future`|Resultant mechasnim in getting result from other means. All those `std::async`, `std::promise`, and `std::packaged_task` return `std::future` either immediately in case of `std::async` or via `get_future()` in case of the other twos. It is used by consumer/reader operation. Underlying it is implemented using `std::thread`.
 
 ## Code Example
 
@@ -71,3 +71,7 @@ Topic | URLs
 \
 \
 `First published on Oct, 8, 2019`
+
+`Nov, 30, 2019`
+
+* <small>Added info that `std::future` is implemented using `std::thread` as its underlying.</small>
