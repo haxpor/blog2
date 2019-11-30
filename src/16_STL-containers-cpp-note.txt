@@ -19,7 +19,7 @@ STL Names | Impl | Note
 `std::unordered_set`| hashmap with external linked-list to store elements | Hashmap whose hashing function operates on the values directly. It allows only unique values (as keys)
 `std::unordered_map`| same | Hashmap whose hashing function operates on keys. It allows only unique keys.
 `std::unordered_multiset`| same | Same as `std::unordered_set` but allows equivalent of values as keys.
-`std::unordered_multimap`| same | Same as `std::unordered_map` but allows euiqvalent of keys.
+`std::unordered_multimap`| same | Same as `std::unordered_map` but allows equivalent of keys.
 
 ## Sequence Container
 
@@ -36,8 +36,15 @@ STL Names | Impl | Note
 STL Names | Impl | Note
 ----------------|-----------------|-----------------------------------
 `std::stack`| based on `std::deque` | Provides LIFO (last-in, first-out) data structure. It acts as a wrapper, and only a specific set of functions on top of `std::deque` is provided. Thus it only provides `push` (from `push_back`), `pop` (from `pop_back`), and `top` (from `back`).
-`std::queue`| based on `std::deque` | Provides FIFO (first-in, first-out) data structure. It acts as a wrapper, and only a specific set of functions on top of `std::deque` is provided. Thus it only provides `push` (from `push_back`), `pop` (from `pop_back`), `top` (from `back`), and `front` (from `front`).
+`std::queue`| based on `std::deque` | Provides FIFO (first-in, first-out) data structure. It acts as a wrapper, and only a specific set of functions on top of `std::deque` is provided. Thus it only provides `push` (from `push_back`), `pop` (from `pop_back`), `back` (from `back`), and `front` (from `front`).
 `std::priority_queue`| based on `std::vector` | Provides constant in lookup of the largest (by default) element. It's similar to heap which we can manually manage via other STL functions i.e. `std::make_heap`, `std::push_heap`, and `std::pop_heap` but with benefit of not to accidentally invalidate the heap.
+
+## Update
+
+`Dec, 01, 2019`
+
+* Fixed *Note* detail of `std::queue` changing from `top` to `back`.
+* Fixed a grammar error.
 
 \
 \
