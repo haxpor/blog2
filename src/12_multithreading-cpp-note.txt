@@ -31,7 +31,7 @@ STL Names | Note
 
 STL Names | Note
 ----------------|--------------------------------------------------------
-`std::atomic`|Hold the atomic object for performing `atomic` operations. Due to its implementation, it **do not** guarantee lock-free. Atomic relies on CPU features and ability.
+`std::atomic`|Hold the atomic object for performing `atomic` operations. Due to its implementation, it **does not** guarantee lock-free. Atomic relies on CPU features and ability.
 `std::atomic_flag`|Lower level of atomic operation with major difference that it guarantees **lock-free** but doesn't provide any load and store operation.
 
 ## Core
@@ -75,3 +75,4 @@ Topic | URLs
 `Nov, 30, 2019`
 
 * <small>Added info that `std::future` is implemented using `std::thread` as its underlying.</small>
+* <small>Fixed grammar error for `std::atomic`.</small>
