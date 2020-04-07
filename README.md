@@ -24,3 +24,4 @@ for this blog.
 | C++ | [C++ STL Containers Note](https://wasin.io/blog/16_STL-containers-cpp-note.html) |
 | C++ | [Simple Lock-free `std::cout` in C++ Multithreading](https://wasin.io/blog/17_simple-lock-free-std-cout-cpp-multithreading.html) |
 | C++ | [Aligned Memory Allocation in C++](https://wasin.io/blog/18_aligned-memory-alloc-cpp.html) |
+| Linux, OpenCL | [Make OpenCL 2.1 Works on Linux for AMD GPU](https://wasin.io/blog/19_make-opencl2-1-works-on-linux-for-AMD-gpu.html) |
