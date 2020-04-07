@@ -198,6 +198,12 @@ if [ "$CMD" == "new" ]; then
 
     # re-build all build automatically
 elif [ "$CMD" == "build" ]; then
+    # create build directory if not yet exist
+    if [ ! -d $BUILD_DIR ]; then
+        mkdir $BUILD_DIR
+        echo "Created $BUILD_DIR directory"
+    fi
+
     # get what to build
     # if empty, then build for all posts
     if [ -z "$2" ] || [ "$2" == "all" ]; then
