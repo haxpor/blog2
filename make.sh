@@ -93,8 +93,11 @@ build_index() {
         printf "source title from %40s\n" "$file"
     done
 
+    # get index's title text
+    index_title=`head -1 /tmp/blog2_index.txt`
+
     # process into html
-    pandoc -c belug1.css -H header.html -B before-min.html -A after-min.html /tmp/blog2_index.txt -o $BUILD_DIR/index.html
+    pandoc -c belug1.css -H header.html -B before-min.html -A after-min.html /tmp/blog2_index.txt --metadata pagetitle="$index_title" -o $BUILD_DIR/index.html
 
     # show error messasge when things went wrong
     if [ $? -ne 0 ]; then
@@ -181,15 +184,18 @@ if [ "$CMD" == "new" ]; then
     echo "Copy supporting files into $BUILD_DIR"
     build_cpsupportfiles
 
+    # get title string from source file
+    title=$(head -1 "src/$file_name")
+
     # pre-convert so users can see the result of .html now
-    pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" -o "$BUILD_DIR/${file_name%%.*}.html"
+    pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" --metadata pagetitle="$title" -o "$BUILD_DIR/${file_name%%.*}.html"
 
     # now open the browser tab
     ${BROWSER} $BUILD_DIR/${file_name%%.*}.html
 
     # wait and listen to file changes event for writing
     # note: don't try to execute this in the background, it's mess to clean up later
-    while inotifywait -e modify "src/$file_name" || true; do pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" -o "$BUILD_DIR/${file_name%%.*}.html" ; done
+    while inotifywait -e modify "src/$file_name" || true; do pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" --metadata pagetitle="$title" -o "$BUILD_DIR/${file_name%%.*}.html" ; done
     # show error messasge when things went wrong
     if [ $? -ne 0 ]; then
         echo "Can't listen to file changes event"
@@ -230,7 +236,10 @@ elif [ "$CMD" == "build" ]; then
 
             printf "%40s  ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$pub_string"
 
-            pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "$file" -o "$BUILD_DIR/${oname}";
+            # get title string from source file
+            title=$(head -1 "$file")
+
+            pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "$file" --metadata pagetitle="$title" -o "$BUILD_DIR/${oname}";
 
             # show error messasge when things went wrong
             if [ $? -ne 0 ]; then
