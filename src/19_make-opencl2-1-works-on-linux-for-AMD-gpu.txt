@@ -1,0 +1,93 @@
+Make OpenCL 2.1 Works on Linux for AMD GPU
+=========================================================
+
+Recently I've built up my new budget PC. So long that I've been around working in mobile space.
+Technology progresses on. It's also an interesting time that this is the first time I ever consider
+using AMD. The marget is shifted! Anyway take that for another post, this one I will show you how to
+make AMD GPU supports OpenCL 2.1 on your Linux box with open source driver Mesa.
+
+There are a few of options to choose from.  
+You can either go with [ROCm](https://github.com/RadeonOpenCompute/ROCm) or [AMDGPU-PRO](https://www.amd.com/en/support/kb/release-notes/rn-amdgpu-unified-linux)'s OpenCL support.
+As the graphics stack for AMD side is kinda messy, you might erk out whether or not the latter option is good.
+
+Anyway if your GPU is supported by AMDGPU-PRO (proprietary driver) and you would like to go with that
+route, that is totally fine. Just that my GPU is not supported by the latter option although I've tested. No luck~
+
+By all means, I provide you with the proper steps in installation for both ways.
+
+## Setup I have
+
+* Ubuntu 19.10
+* Kernel: `5.3.18-050318-generic`
+* GPU (proper term is APU) on Ryzen 3 2200g (with no discrete GPU)
+
+## ROCm
+
+ROCm works **only** with kernel 5.3, if you're on 5.5, that is not going to work.
+Your only option firstly is to downgrade your kernel version back to 5.3.
+Fortunately upgrading/downgrading Linux kernel is not a difficult task really, let me know if you're
+stuck, and I might write about it too.
+
+Thing is ROCm advertises itself that it only support LTS version of Ubuntu which doesn't include
+19.10. It is mostly at 18.04 as you might guess. Even that is the case, but it works on my machine.
+
+At the time of this writing, ROCm released 3.3.0, the latest version. You don't have to install its
+whole lots of packages as we only focus to make OpenCL works. If not, you might have to spend your
+disk space at magnitude of Gigabyte. Let's do this.
+
+1. `wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -`
+2. `echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list` (do not worry that it's for `xenial` line, it works with `eoan` as well as I tested it)
+3. `sudo apt update`
+4. `sudo apt install libnuma-dev`
+5. `sudo apt install dkms rock-dkms rocm-clang-ocl rocm-opencl rocm-opencl-dev`
+6. `sudo usermod -a -G video $LOGNAME`
+7. `sudo usermod -a -G render $LOGNAME` (optional for Ubuntu < 19.10, but 19.10 requires as proper group name is now `render`)
+8. `sudo reboot` (optional, I'm able to validate it works without rebooting the system, but you might have to)
+9. Download AMDGPU-PRO package from [here](https://www.amd.com/en/support/kb/release-notes/rn-amdgpu-unified-linux) then save it with same name (as of now it's version 19.50 for AMDGPU-PRO package. Don't worry we're not going to install it, we just need to extract and get some `.so` files that they are required to work with ROCm package. Such a hacky way!)
+10. `tar xvf <filename>` to extract the package
+11. Download [do.sh](https://gist.github.com/haxpor/8533fde401853615f4b2e4510048a319) and save at the same place of downloaded AMD package.
+12. `chmod +x do.sh`
+13. `./do.sh`
+14. If you see message `done` on console, then operation is successful.
+15. **Be careful with this step. You need to copy all files and directories inside `pkgdir/` into `/`. You can do it manually with `sudo cp -Rp pkgdir/* /`. You can even list all files recursively inside `pkgdir/` first via `ls -R pkgdir/` then copy each file there one by one for full safety.
+16. `cd /opt/rocm/opencl/bin/x86_64`
+17. `./clinfo` and you should see all long list of information dumped out. Make sure it detected your platforms and devices. The latter is important, it must able to detect at least one and no error at all.
+18. All done.
+
+### Supporting links
+
+* Evident report that Ubuntu 19.10 works but just that you need kernel 5.3 - [link](https://github.com/RadeonOpenCompute/ROCm/issues/969#issuecomment-589976468)
+* Minimal installation for ROCm only for OpenCL support - [link1](https://github.com/RadeonOpenCompute/ROCm/issues/474#issuecomment-409005965), and [link2](https://github.com/RadeonOpenCompute/ROCm/issues/474#issuecomment-409407831)
+
+## AMDGPU-PRO's OpenCL
+
+(**full flow untested, only partial as my GPU is not supported by this driver, use at your own risk**) but I expect it's worth a try if you don't like ROCm option.
+
+Please let me know if it works for you.  
+This option doesn't mean we will install AMDGPU-PRO driver, but only its OpenCL support. But due to some closenit of OpenCL with AMDGPU-PRO driver in some sense, it needs to install some of the AMDGPU-PRO's packages which **might** interfere with your current driver. Becareful. I was not able to manage to make it work due to unsupported but **able** to revert back to working state of Mesa driver.
+
+If `apt` messes up your installation dependencies, and `sudo apt install -f` cannot fix it. You can use `sudo dpkg --purge --force-all <package-name>` to force uninstall package one by one for all of packages the installation script did for you.
+
+**Note**: By intalling this proprietary driver even if you already had open source Mesa driver installed, the system will automatically activate and use AMDGPU-PRO for you. So it's convenient. In case something went wrong, just uninstall AMDGPU-PRO driver via its uninstall script, then the system will fall back to Mesa as before. I think this is safer and better than messing around with blacklisting driver, or supplying the proper variables for [kernel boot](https://www.reddit.com/r/linuxquestions/comments/bggynm/how_do_i_use_amdgpu_instead_of_radeon_on_ubuntu/elkx7i7/).
+
+So with all the notes above, it's time to go forward.  
+Let's do this.
+
+1. Download AMDGPU-PRO package from [here](https://www.amd.com/en/support/kb/release-notes/rn-amdgpu-unified-linux)
+2. `tar xvf <filename>` to extract the package
+3. `./amdgpu-pro-install --opencl=legacy,pal --headless` to install only OpenCL support
+4. `sudo apt install clinfo`
+5. `clinfo` (if you see proper message dump of OpenCL 2.1 support with platform and devices detected, then it's all fine.)
+
+## How to test OpenCL-based applications?
+
+You can use `phoronix-test-suite` to install test-suite to test various kind of things in which OpenCL is also included.
+
+1. `sudo apt install phoronix-test-suite`
+2. `phoronix-test-suite run pts/luxmark` or `phoronix-test-suite run pts/juliagpu`
+
+If you are able to see things get rendered on screen and result benchmark at the end, then it works! You now have OpenCL 2.1 support with your AMD GPU.
+
+\
+\
+`First published on April, 7, 2020`
