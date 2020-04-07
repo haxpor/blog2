@@ -1,13 +1,32 @@
 #!/bin/bash
 # main management script to do various operations
-# this scripts requires
-# 1. firefox
-# 2. pandoc
-# 3. inotifywait
 #
 # make <operation> [options]
 #
 # See print_help() function for more information on usage.
+
+# check basic requirement needed to properly run the program
+# Depend on the following program
+# 1. firefox
+# 2. pandoc
+# 3. inotifywait
+# if it detects a missing dependency then it will print out and exit immediately.
+check_requirement() {
+    # the list of application the script depends on
+    dep_app_array=(firefox pandoc inotifywait)
+    
+    for app in "${dep_app_array[@]}"
+    do
+        which "$app" 2>&1 > /dev/null
+        if [ $? -ne 0 ]; then
+            echo "Error! Install '$app' first before proceed further."
+            exit 1
+        fi
+    done
+}
+
+# always check for dependency first before doing anything
+check_requirement
 
 CMD=$1
 
