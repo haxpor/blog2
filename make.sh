@@ -211,17 +211,26 @@ elif [ "$CMD" == "build" ]; then
     fi
 
     # get what to build
-    # if empty, then build for all posts
-    if [ -z "$2" ] || [ "$2" == "all" ]; then
-        echo "Build all posts"
+    # build for specific post#no.
+    if [ -z "$2" ]; then
+        echo "Empty parameters"
+        print_help
+    elif ! [[ -n ${2//[0-9]/} ]]; then
+        echo "Build for post $2"
 
-        # check if the directory is empty
-        if [ ! "$(ls -A src)" ]; then
-            echo "src/ is empty"
-            exit 0
+        # file not exist
+        if [ ! -f src/$2_*.txt ]; then
+            echo "Target file doesn't exist"
+            exit 1
         fi
 
-        find src -type f -name "*.txt" -print0 | xargs --null ls -1 | sort -V | while read file
+        echo "This will build only for '$(ls src/$2_*.txt)'"
+        # get only filename
+        target_file="$(basename `ls src/$2_*.txt`)"
+
+        # just for consistency with logic code in "build" case
+        # TODO: probably need to refactor this into function...
+        find src -type f -name "$target_file" -print0 | xargs --null ls -1 | sort -V | while read file
         do
             # get output filename without extension
             oname=$(basename "$file")
@@ -267,6 +276,53 @@ elif [ "$CMD" == "build" ]; then
 
         echo "Copy supporting files into $BUILD_DIR"
         build_cpsupportfiles
+    # build for all posts
+    elif [ "$2" == "all" ]; then
+        echo "Build all posts"
+
+        # check if the directory is empty
+        if [ ! "$(ls -A src)" ]; then
+            echo "src/ is empty"
+            exit 0
+        fi
+
+        find src -type f -name "*.txt" -print0 | xargs --null ls -1 | sort -V | while read file
+        do
+            # get output filename without extension
+            oname=$(basename "$file")
+            # replace empty space with underscore
+            oname=${oname// /_}
+            # replace to use .html extension
+            oname=${oname%%.*}.html
+
+            # find published date as wrote (fixed pattern) inside the source file
+            pub_string=$(tail "$file" | grep "$PUBLISHED_DATE_PATTERN");
+            pub_string=${pub_string:19:-1};
+
+            printf "%40s  ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$pub_string"
+
+            # get title string from source file
+            title=$(head -1 "$file")
+
+            pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "$file" --metadata pagetitle="$title" -o "$BUILD_DIR/${oname}";
+
+            # show error messasge when things went wrong
+            if [ $? -ne 0 ]; then
+                echo "Error building $file"
+                exit 1
+            fi
+        done
+
+        echo "Build index.html"
+        build_index
+
+        echo "Copy supporting files into $BUILD_DIR"
+        build_cpsupportfiles
+
+    # anything else
+    else
+        echo "Not recognize parameters"
+        print_help
     fi
 # clean build directory
 elif [ "$CMD" == "clean" ]; then
