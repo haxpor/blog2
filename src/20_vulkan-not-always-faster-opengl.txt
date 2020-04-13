@@ -1,0 +1,137 @@
+Vulkan is not always faster than OpenGL!
+=========================================================
+
+Upon my research and studying over Vulkan reaching the point of [Rendering and Presentation](https://vulkan-tutorial.com/Drawing_a_triangle/Drawing/Rendering_and_presentation) chapter of vulkan-tutorial.com. I took a chance to compare the performance of rendering a **single** triangle between Vulkan, and OpenGL. Both have at most similar setup as much as possible. You can see my initial comment over this topic [here](https://vulkan-tutorial.com/Drawing_a_triangle/Drawing/Rendering_and_presentation#comment-4860928681).
+
+Surprisingly, I got lower FPS gained from Vulkan. It is lower by ~2000 FPS as compared to OpenGL. To be clear, Vulkan gets ~7800 FPS, and OpenGL gets ~9800 FPS. You can check my OpenGL code for such setup [here](https://github.com/haxpor/lgl/blob/master/src/_OOP/HelloTriangle.cpp).
+
+Although I slightly modified the synchronization approach used based on top of such chapter to follow along with approach used in [GL_vs_VK - Test1](https://github.com/RippeR37/GL_vs_VK/blob/master/src/tests/test1/vk/SimpleBallsSceneTest.cpp), in my opinion it is easier to understand and see why it would need such fences, or semaphores. With that, it helps boosting up FPS by ~200 FPS. It still doesn't able to match with OpenGL's result.
+
+> [GL_vs_VK](https://github.com/RippeR37/GL_vs_VK) is a thesis project by RippeR37 comparing performance between OpenGL and Vulkan graphics API under different circumstance both for single-threaded and multi-threaded.
+
+So I further proceeded with [GL_vs_VK](https://github.com/RippeR37/GL_vs_VK) to see whether the results align with what I've found if I would modify the number of triangle to render.
+
+Here is the results I got. Notice at number of triangle is 1, Vulkan is still at worse than OpenGL. Reasons for this will come after the listing of the benchmark results.
+
+# Setup
+
+My machine is Ubuntu 19.10, kernel: `5.3.18-050318-generic`, with Ryzen 3 2200g with 16 GB RAM, no discrete GPU.
+
+By making a modification to numbers of triangle in `src/tests/test1/BaseBallsSceneTest.cpp` to be desire number, then execute 4 sets of benchmark as follows.
+
+## OpenGL Single-Threaded
+
+`./GL_vs_VK -t 1 -api gl -benchmark -time 10`
+
+## OpenGL Multi-Threaded
+
+`./GL_vs_VK -t 1 -api gl -benchmark -time 10 -m`
+
+## Vulkan Single-Threaded
+
+`./GL_vs_VK -t 1 -api vk -benchmark -time 10 -m`
+
+## Vulkan Multi-Threaded
+
+`./GL_vs_VK -t 1 -api vk -benchmark -time 10 -m`
+
+**Notice** that we keep it running for 10 seconds.
+
+# Benchmarks
+
+## GL_vs_VK - Triangle Count 1
+
+### OpenGL
+
+Threading | &nbsp; Min ft (ms) | &nbsp; Max ft (ms) | &nbsp; Avg ft (ms) | &nbsp; Max FPS | &nbsp; Min FPS | &nbsp; Avg FPS
+----------|----------:|----------:|----------:|----------:|----------:|----------:
+Single-Threaded|0.061760|11.682720|0.168683|16191.709844|85.596505|<span style="color:red">5928.292623</span>
+Multi-Threaded|157.958540|195.491431|173.885831|6.330775|5.115314|5.750900
+
+### Vulkan
+
+Threading | &nbsp; Min ft (ms) | &nbsp; Max ft (ms) | &nbsp; Avg ft (ms) | &nbsp; Max FPS | &nbsp; Min FPS | &nbsp; Avg FPS
+----------|----------:|----------:|----------:|----------:|----------:|----------:
+Single-Threaded|0.049210|2.674723|0.266203|20321.072953|373.870491|<span style="color:red">3756.527258</span>
+Multi-Threaded|0.162930|8.399509|0.295276|6137.605106|119.054578|3386.665932
+
+**Note:** <span style="color:red">Red</span> text indicates when OpenGL has better performance than Vulkan.
+
+## GL_vs_VK - Triangle Count 100
+
+### OpenGL
+
+Threading | &nbsp; Min ft (ms) | &nbsp; Max ft (ms) | &nbsp; Avg ft (ms) | &nbsp; Max FPS | &nbsp; Min FPS | &nbsp; Avg FPS
+----------|----------:|----------:|----------:|----------:|----------:|----------:
+Single-Threaded|0.187840|5.085851|0.288568|5323.679727|196.623928|3465.385333
+Multi-Threaded|0.273139|7.251312|0.427964|3661.139566|137.906078|2336.646718
+
+### Vulkan
+
+Threading | &nbsp; Min ft (ms) | &nbsp; Max ft (ms) | &nbsp; Avg ft (ms) | &nbsp; Max FPS | &nbsp; Min FPS | &nbsp; Avg FPS
+----------|----------:|----------:|----------:|----------:|----------:|----------:
+Single-Threaded|0.097439|6.650845|0.268783|10262.831105|150.356834|3720.467167
+Multi-Threaded|0.182610|5.852518|0.325074|5476.151361|170.866625|3076.224899
+
+**Note:** Avg FPS of both graphics APIs indicate the number of triangles around ~1xx is the diminishing return point at which Vulkan will start to shine.
+
+## GL_vs_VK - Triangle Count 200
+
+### OpenGL
+
+Threading | &nbsp; Min ft (ms) | &nbsp; Max ft (ms) | &nbsp; Avg ft (ms) | &nbsp; Max FPS | &nbsp; Min FPS | &nbsp; Avg FPS
+----------|----------:|----------:|----------:|----------:|----------:|----------:
+Single-Threaded|0.282030|2.357284|0.391126|3545.722086|424.217023|2556.718589
+Multi-Threaded|0.327139|6.800143|0.526437|3056.804600|147.055731|1899.562859
+
+### Vulkan
+
+Threading | &nbsp; Min ft (ms) | &nbsp; Max ft (ms) | &nbsp; Avg ft (ms) | &nbsp; Max FPS | &nbsp; Min FPS | &nbsp; Avg FPS
+----------|----------:|----------:|----------:|----------:|----------:|----------:
+Single-Threaded|0.148400|5.213387|0.288929|6738.544474|191.813882|3461.061541
+Multi-Threaded|0.201749|3.371651|0.354996|4956.654060|296.590602|2816.929524
+
+## GL_vs_VK - Triangle Count 500
+
+### OpenGL
+
+Threading | &nbsp; Min ft (ms) | &nbsp; Max ft (ms) | &nbsp; Avg ft (ms) | &nbsp; Max FPS | &nbsp; Min FPS | &nbsp; Avg FPS
+----------|----------:|----------:|----------:|----------:|----------:|----------:
+Single-Threaded|0.602639|6.663223|0.736657|1659.368212|150.077523|1357.482968
+Multi-Threaded|0.582768|5.724255|0.920224|1715.948714|174.695222|1086.692188
+
+### Vulkan
+
+Threading | &nbsp; Min ft (ms) | &nbsp; Max ft (ms) | &nbsp; Avg ft (ms) | &nbsp; Max FPS | &nbsp; Min FPS | &nbsp; Avg FPS
+----------|----------:|----------:|----------:|----------:|----------:|----------:
+Single-Threaded|0.318399|6.668269|0.363154|3140.713382|149.963956|2753.650049
+Multi-Threaded|0.243349|4.082437|0.397493|4109.324468|244.951729|2515.765958
+
+## GL_vs_VK - Triangle Count 1000
+
+### OpenGL
+
+Threading | &nbsp; Min ft (ms) | &nbsp; Max ft (ms) | &nbsp; Avg ft (ms) | &nbsp; Max FPS | &nbsp; Min FPS | &nbsp; Avg FPS
+----------|----------:|----------:|----------:|----------:|----------:|----------:
+Single-Threaded|1.121107|11.794929|1.343919|891.975521|84.782198|744.092734
+Multi-Threaded|0.993487|6.283654|1.555241|1006.555697|159.143072|642.98
+
+### Vulkan
+
+Threading | &nbsp; Min ft (ms) | &nbsp; Max ft (ms) | &nbsp; Avg ft (ms) | &nbsp; Max FPS | &nbsp; Min FPS | &nbsp; Avg FPS
+----------|----------:|----------:|----------:|----------:|----------:|----------:
+Single-Threaded|0.598028|5.253233|0.650044|1672.162507|190.358966|1538.357590
+Multi-Threaded|0.313759|5.227853|0.476048|3187.159572|191.283114|2100.627088
+
+# Summary
+
+Imagine 3D-based virtualization application needs to render numbers of mesh on screen thus it needs to send vertex attribute as data to GPU each frame if those data are dynamic. If such application isn't reaching CPU-bound point (the diminishing return point of benefit from OpenGL) then Vulkan-based application doesn't shine just yet and will perform not quite fully to its low overhead abstraction.
+
+So be aware of such CPU-bound point of the application. OpenGL and Vulkan will offer different benefit and shine at different scenario.
+
+Aside, multi-threading in Vulkan will shine and show its benefit when the number of instances to draw on screen is high enough to compensate with some costs used in handling or setting up multi-threading ecosystem. Notice at triangle count of 1000.
+
+
+\
+\
+`First published on April, 13, 2020`
