@@ -120,7 +120,12 @@ list_allposts() {
         # get title string from source file
         title=$(head -1 "$file")
 
-        printf "%60s ${YELLOW} %60s ${NC} ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$title" "$pub_string"
+        if [ "$1" == "--no-format" ]; then
+            printf "%s ${YELLOW} %s ${NC} ${GREEN}[${NC}%s${GREEN}]${NC}\n" "$file" "$title" "$pub_string"
+        else
+            printf "%60s ${YELLOW} %60s ${NC} ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$title" "$pub_string"
+        fi
+
     done
 }
 
@@ -329,7 +334,7 @@ elif [ "$CMD" == "clean" ]; then
     rm -rf $BUILD_DIR/* && echo "Clean $BUILD_DIR"
 # list all posts
 elif [ "$CMD" == "list" ]; then
-    list_allposts
+    list_allposts $2
 # otherwise not match any commands
 else
     print_help
