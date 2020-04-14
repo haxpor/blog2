@@ -58,7 +58,7 @@ print_help() {
     echo "          'inotifywait' for automatically update changes then write as output .html at"
     echo "          posts/ directory, then finally open a browser tab using firefox."  
     echo ""
-    echo "  build [all,index]   - build .txt source file into .html"
+    echo "  build [<post-no>,all,index]   - build .txt source file into .html"
     echo ""
     echo "          Usage: build <post-no>"
     echo "                 build a specific post No. then copy, implicitly build index."
