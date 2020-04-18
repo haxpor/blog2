@@ -116,10 +116,10 @@ Relationship for its underlying components
     * a vector array of `VkVertexInputAttributeDescription` - specify format of vertex attributes
 * (Input assembly) `VkPipelineInputAssemblyStateCreateInfo` - for topology i.e. triangle list, triangle fan, etc, as well as whether or not to enable indexed drawing via `.primitiveRestartEnable`
 * (Viewport and Scissors) `VkViewport`, `VkRect2D`, `VkPipelineViewportStateCreateInfo`
-* `VkPipelineRasterizationCreateInfo`
+* (Rasterization) `VkPipelineRasterizationCreateInfo`
 * `VkPipelineMultisampleStateCreateInfo`
 * `VkPipelineColorBlendAttachmentState` - blending state i.e. src/dst blend factor, src/dst alpha blend factor. Disable/Enable via `.blendEnable`.
-* `VkPipelineColorBlendStateCreateInfo` - blending state to surface. Disable/Enable via `.logicOpEnable`.
+* (Color blending) `VkPipelineColorBlendStateCreateInfo` - blending state to surface. Disable/Enable via `.logicOpEnable`.
 * `VkDynamicState` - for dynamic states which can be set in runtime preventing re-creation of related graphics pipepline objects from scratch i.e. `VK_DYNAMIC_STATE_VIEWPORT`, or `VK_DYNAMIC_STATE_LINE_WIDTH`. (**not use at the moment**)
 * `VkPipelineDynamicStateCreateInfo` (**not use at the moment**)
 * `VkPipelineLayoutCreateInfo`
@@ -131,7 +131,7 @@ Relationship for its underlying components
 # 10. Create framebuffers
 
 * Prepare by resizing a vector array of framebuffers to be the size of swapchain's images.
-* iterate through array
+* Iterate through array
     * `VkFramebufferCreateInfo` - use `VkImageView` for attachments
     * `vkCreateFramebuffer`
 
@@ -147,7 +147,7 @@ Relationship for its underlying components
 * Allocate command buffers via `VkCommandBufferAllocateInfo`, and call `vkAllocateCommandBuffers`
     * `.level` set to `VK_COMMAND_BUFFER_LEVEL_PRIMARY`
     * `.commandPool` set to command pool we've created
-* for all command buffers
+* For all command buffers
     * `VkCommandBufferBeginInfo`
     * `vkBeginCommandBuffers` - begin recording the command buffer
     * `VkRenderPassBeginInfo`
