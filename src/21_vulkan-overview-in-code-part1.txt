@@ -1,0 +1,253 @@
+Vulkan Overview in Code - Part 1
+=========================================================
+
+I've realized how explicit and involved effort in setting up Vulkan code even prior to the first simple triangle rendered on screen. So here is Part I for code overview in setting up working rendering code with Vulkan. It explores various areas either required or are better to use for performance gained.
+
+Part I covers all essential and basic initializations, and rendering loop leaving some areas which will be working on top the foundation like *Vertex buffer*, *Uniform buffers* for later parts. So it is pure stuff required to get a simple triangle able to be rendered on screen. Subsequent parts will expand more gradually.
+
+# Initialization Overview
+
+1. Create instance
+2. (optional) Setup debug messenger
+3. Create Surface
+4. Pick physical device
+5. Create logical device
+6. Create swapchain
+7. Create imageviews
+8. Create renderpass
+9. Create graphics pipeline
+10. Create framebuffers
+11. Create command pool
+12. Create command buffers
+13. Create sync objects
+
+# 1. Create instance
+
+* (optional) check validation layer support `VK_LAYER_KHRONOS_validation`
+* `VkApplicationInfo`
+    * `.apiVersion = VK_API_VERSION_1_2` for Vulkan's api version to link against
+* `VkInstanceCreateInfo`
+    * `.enabledExtension = <size of extensions>`
+    * `.ppEnabledExtensionNames = <vector array of extension names>`
+* (optional) `VkDebugUtilsMessengerCreateInfoExt` to set up debug call prior to the call to create a new instance by setting to its `.pNext` field (we will be doing the similar thing again in *Setup debug messenger* for whole other calls).
+    * set `.pfnUserCallback` by seeing the function signature at [PFN_vkDebugUtilsMessengerCallbackEXT](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/PFN_vkDebugUtilsMessengerCallbackEXT.html)
+* `vkCreateInstance` to actually create an instance.
+
+# 2. Setup debug messenger
+
+This is different from 1. as this will hook up the entire call chain into the input `VkInstance`
+
+* Similar concept to 1., it uses `PFN_vkCreateDebugUtilsMessengerEXT` callback signature to get function address of "`vkCreateDebugUtilsMessengerEXT`" through `vkGetInstanceProcAddr`.
+
+# 3. Create surface
+
+This is specifically for window system/library you might be using, in usual case it is probably be [glfw](https://www.glfw.org/) by using the following function
+
+* `glfwCreateWindowSurface()` to create `VkSurfaceKHR`
+
+# 4. Pick physical device
+
+* `vkEnumeratePhysicalDevices` - to get device count and devices to iterate later
+* Custom logic to rate each device then collect them into the collection
+* Pick a suitable *single* device to work with. But it can be multiple devices if they are all the same GPU or graphics card model which Vulkan has suport sharing resource between them (though that's more complicated for simple setup).
+
+# 5. Create logical device
+
+* Find queue family <sub>[findQueueFamilies()](#findQueueFamilies)</sub> for graphics and presentation queue then cache it for later use
+* Create a vector array of `VkDeviceQueueCreateInfo` to hold to-be-created unique `VkDeviceQueueCreateInfo`
+* `VkPhysicalDeviceFeatures` to enable any device features when create. In case of no special device features to be enabled, then specify default initialized of such structure of `nullptr`.
+* `VkDeviceCreateInfo` - create info for logical device
+    * `.pQueueCreateInfos` - set them from what we have
+    * `.pEnableFeatures` - device features to be enabled
+    * `.enabledExtensionCount` - number of device extensions to enable
+    * `.ppEnabledExtensionNames` - device extension names to enable
+    * `.enabledLayerCount` and `.ppEnabledLayerNames` are deprecated and ignored
+* `vkCreateDevice` - to create logical device
+* cache graphics and presentation queues via `vkGetDeviceQueue()`
+
+# 6. Create swapchain
+
+Relationship for its underlying components
+
+`VkFramebuffer` -> `VkImageView` -> `VkImage`  
+
+* Get swapchain support details via [SwapChainSupportDetails](#SwapChainSupportDetails)
+* `VkSurfaceFormatKHR` - choose desire surface format (from `SwapChainSupportDetails`) 
+* `VkPresentModeKHR` - choose desire presentation mode (from `SwapChainSupportDetails`)
+* `VkExtent2D` - choose desire swap extent (from `SwapChainSupportDetails`)
+* `VkSwapchainCreateInfoKHR` - our main swapchain object
+    * `.minImageCount = 3` - it is usually 2 or 3 for *double buffering* or *tripple buffering* respectively. See [here](https://developer.samsung.com/sdp/blog/en-us/2019/07/26/vulkan-mobile-best-practice-how-to-configure-your-vulkan-swapchain) for difference between double and tripple buffering.
+    * `.imageFormat` and `.imageColorSpace` - set them properly
+    * `.imageSharingMode` - it can be either exclusive or sharing depending on whether graphics and presentation queues we got are the same, if so they should be exclusive.
+    * `.queueFamilyIndexCount` - it should be number of queues we got (all types) if each queue we got is independent thus not the same, only taken into account when `.imageSharingMode` is concurrent
+* `vkCreateSwapchainKHR` - to create a swapchain
+* Populate swapchain's images via `vkGetSwapchainImagesKHR` then cache them for later use
+* Cache swapchain's image format, and extent for later use. Get these information from `SwapChainSupportDetails` structure.
+
+# 7. Create imageviews
+
+* Prepare by resizing our array of imageviews holder to be the size of swapchain's images we knew from step 6.
+* `VkImageViewCreateInfo` - create info structure to create imageView (repeat for number of swapchain's images)
+    * `.viewType` - mostly it would be `VK_IMAGE_VIEW_TYPE_2D`
+    * Mapping each color component as needed through its `.components`
+    * Set mipmap level via `.subresourceRange`. It is able to automatically set the remaining of mipmap levels to all remaining levels - per se max out as it can be via `VK_REMAINING_MIP_LEVELS` and `VK_REMAINING_ARRAY_LAYERS`.
+
+# 8. Create renderpass
+
+* `VkAttachmentDescription`
+    * Define load/store for color & depth, and stencil through `.loadOp`, `.storeOp`, `.stencilLoadOp`, and `.stencilStoreOp`.
+    * Define initial and final layout through `.initialLayout`, and `.finalLayout`.
+    * Define the number of samples the operation will base on through `.samples`.
+* `VkAttachmentReference`
+* `VkSubpassDescription`
+* `VkSubpassDependency` - define dependency, operation requirement for source/destination, specify source/destination stage
+* `VkRenderPassCreateInfo` - use info from `VkAttachmentReference`, `VkSubpassDescription`, and `VkSubpassDependency`
+* `vkCreateRenderPass` - use info from `VkRenderPassCreateInfo`
+
+# 9. Create grahpics pipeline
+
+* Create shader modules
+    * Read in shader source file to get a raw array of character pointer to shader code
+    * `VkShaderModuleCreateInfo`, and `VkShaderModule` - structure used to hold shader module
+    * `vkCreateShaderModule` - call to create a shader module
+* `VkPipelineShaderStageCreateInfo` for both vertex and fragment shader stage (`VK_SHADER_STAGE_VERTEX_BIT`, and `VK_SHADER_STAGE_FRAGMENT_BIT`)
+* (Vertex input) <sub>[graphics pipeline](https://vulkan-tutorial.com/images/vulkan_simplified_pipeline.svg)</sub> `VkPipelineVertexInputStateCreateInfo`
+    * `VkVertexInputBindingDescription` - specify binding number, stride size, and input rate whether it's vertex index or instance index (instance rendering).
+    * a vector array of `VkVertexInputAttributeDescription` - specify format of vertex attributes
+* (Input assembly) `VkPipelineInputAssemblyStateCreateInfo` - for topology i.e. triangle list, triangle fan, etc, as well as whether or not to enable indexed drawing via `.primitiveRestartEnable`
+* (Viewport and Scissors) `VkViewport`, `VkRect2D`, `VkPipelineViewportStateCreateInfo`
+* `VkPipelineRasterizationCreateInfo`
+* `VkPipelineMultisampleStateCreateInfo`
+* `VkPipelineColorBlendAttachmentState` - blending state i.e. src/dst blend factor, src/dst alpha blend factor. Disable/Enable via `.blendEnable`.
+* `VkPipelineColorBlendStateCreateInfo` - blending state to surface. Disable/Enable via `.logicOpEnable`.
+* `VkDynamicState` - for dynamic states which can be set in runtime preventing re-creation of related graphics pipepline objects from scratch i.e. `VK_DYNAMIC_STATE_VIEWPORT`, or `VK_DYNAMIC_STATE_LINE_WIDTH`. (**not use at the moment**)
+* `VkPipelineDynamicStateCreateInfo` (**not use at the moment**)
+* `VkPipelineLayoutCreateInfo`
+* `vkCreatePipelineLayout` - create pipeline layout first
+* `VkGraphicsPipelineCreateInfo` - use created structures to set its fields
+* `vkCreateGraphicsPipelines` - able to create multiple graphics pipelines at the same time
+* `vkDestroyShaderModule` - as we finish using it, it's safe to destroy
+
+# 10. Create framebuffers
+
+* Prepare by resizing a vector array of framebuffers to be the size of swapchain's images.
+* iterate through array
+    * `VkFramebufferCreateInfo` - use `VkImageView` for attachments
+    * `vkCreateFramebuffer`
+
+# 11. Create command pool
+
+* Find suitable queue families from a selected physical device
+* `VkCommandPoolCreateInfo` with selected queue family index set to its `.queueFamilyIndex`
+* `vkCreateCommandPool`
+
+# 12. Create command buffers
+
+* Prepare by resizing a vector array of command buffers to have the size of swapchain's images
+* Allocate command buffers via `VkCommandBufferAllocateInfo`, and call `vkAllocateCommandBuffers`
+    * `.level` set to `VK_COMMAND_BUFFER_LEVEL_PRIMARY`
+    * `.commandPool` set to command pool we've created
+* for all command buffers
+    * `VkCommandBufferBeginInfo`
+    * `vkBeginCommandBuffers` - begin recording the command buffer
+    * `VkRenderPassBeginInfo`
+        * `VkClearValue` - set its to a desire clearing color. It is able to set to multiple colors for multiple target of attachments of a framebuffer
+    * `vkCmdBeginRenderPass` - if it's a primary command buffer then use `VK_SUBPASS_CONTENTS_INLINE` for `contents` parameter, if you use execute command via its secondary command buffer then use `VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS`. This will begin the render pass
+    * `vkCmdBindPipeline` - bind a pipeline at specific binding point either compute, graphics or ray-tracing operations
+    * `vkCmdDraw` - actual drawing command
+    * `vkCmdEndRenderPass` - end the render pass
+    * `vkEndCommandBuffer` - end the recording of a command buffer
+
+# 13. Create sync objects
+
+This depends on your synchronizing logic, but at the baseline with good performance, it's good to follow along with synchronizing approach used in [GL_vs_VK - Test1](https://github.com/RippeR37/GL_vs_VK/blob/d4ca00b40b8cc210b999deed29f2b8c9b1c7645f/src/tests/test1/vk/SimpleBallsSceneTest.cpp).
+
+As such, the number of **semaphores** (`VkSemaphore`) is 2 x number of swapchain's images in which in this case we have 4 for double buffering (2 images), or 6 for tripple buffering (3 images)
+
+As well, the number of **fence** (`VkFence`) is just number of swapchain's images.
+
+* Prepare for all vector array of sync objects (either `VkFence`, or `VkSemaphore`) to have size of swapchain's images
+* Semaphore has support for the following case. That's why it needs to multiply with 2.
+    * Image availability
+    * Render completion
+* Fence has support for the following case. That's why it just multiplies with 1.
+    * Image In-flight
+* `VkSemaphoreCreateInfo`, and `VkFenceCreateInfo` for create info for `VkSemaphore` and `VkFence` respectively.
+* `vkCreateSemaphore`, and `vkCreateFence` to create semaphore and fence respectively.
+
+# Misc
+
+## Vector array holder size
+
+Mostly the vector arrays used to hold to-be-created structures across the code base will have the size of swapchain's images.
+
+Actually we can interchangeably say the size of swapchain's framebuffers, or imageviews, or images. They are all related deep down to the size of images. All higher-up structures are created on top of the size of images.
+
+## Rendering loop in Overview
+
+* Get the semaphore index **before** the call to `vkAcquireNextImageKHR`.
+
+    > **Note:** that there are 2 index-group. Semaphore uses different set of indexes as used by a group of fences, command buffers and presentable images.
+* `vkAcquireNextImageKHR` to get next available image index.
+
+    > **Note:** that such returned image index can still be in presenting state and can be in any order, that is why we need image in-flight state thus each uses different index set.
+* `VkSubmitInfo` - create a submit info
+    * `.pWaitSemaphore` - set to `image_available_semaphores[curr_semaphore_index]`
+    * `.pWaitDstStageMask` - set to `VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT`.
+    * `.pCommandBuffers` - set to `VkCommandBuffer` as created once (recorded should be better term) at startup
+    * `.pSignalSemaphores` - set to `render_finished_semaphores[curr_semaphore_index]`
+* `vkQueueSubmit` - submit the queue
+    * Set 4th parameter (fence) to be `images_inflight[image_index]` wheres `image_index` is index returned from `vkAcquireNextImageKHR`. This will signal such fence whenever all command buffers completely executed.
+* `VkPresentInfoKHR`
+    * `.pWaitSemaphores` - set to `render_finished_semaphore[curr_semaphore_index]` to wait a semaphore until it is completely rendered first
+    * `.pImageIndices` - set to `&image_index` as acquired from `vkAcquireNextImageKHR`
+    * `.pResults` - set to `nullptr` in case we has no need to know the result of presenting, or non-null otherwise.
+* `vkQueuePresentKHR` - to finally present 
+
+## Clean up
+
+* `vkDestroySemaphore`, and `vkDestroyFence` - Destroy all semaphores, and fences
+* `vkDestroyCommandPool` - Destroy all command pools (implicitly destroy command buffers without explicitly call to destroy command buffers via `vkDestroyCommandBuffers`)
+* `vkDestroyFramebuffer` - Destroy framebuffers
+* `vkDestoryPipeline` - Destroy pipeline
+* `vkDestroyPipelineLayout` - Destroy pipeline layout
+* `vkDestroyImageView` - Destroy imageView
+* `vkDestroySwapchainKHR` - Destroy swapchain
+* `vkDestroyDevice` - Destroy logical device
+* (optional) `DestroyDebugUtilsMessengerEXT` which wraps the call to get actual function address to `vkDestroyDebugUtilsMessengerEXT` via the call to `vkGetInstanceProcAddr`.
+* `vkDestroySurfaceKHR` - Destroy surface
+* `vkDestroyInstance` - Destroy instance
+* (window system/library related) `glfwDestroyWindow` and `glfwTerminate` - Destroy window and terminate. If you use other library, then the call will be different.
+
+## <a name="SwapChainSupportDetails"></a>`SwapChainSupportDetails` structure
+
+It consists of cached surface's capabilities, formats, and presentation mode. If has the following fields
+
+```
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
+```
+
+## <a name="findQueueFamilies"></a>`findQueueFamilies(VkPhysicalDevice device)`
+
+* It has structure to hold different queue families (mainly graphics, and present queue family)
+* `vkGetPhysicalDeviceQueueFamilyProperties`
+* `vkGetPhysicalDeviceSurfaceSupportKHR` - to check whether a surface supports presentation
+* Iterate through all queue families, then check if such queue supports graphics or presentation then cache each queue family type to different index even if both graphics queue and presentation queue has the same index value. We differentiate it to properly set sharing mode of queues when we create swapchain.
+
+## `querySwapChainSupport(VkPhysicalDevice device)`
+
+* Query `SwapChainSupportDetails` for its field by field in which you have to calls the following
+    * `vkGetPhysicalDeviceSurfaceCapabilitiesKHR` - to get capabilities
+    * `vkGetPhysicalDeviceSurfaceFormatsKHR` - to get surface formats, called twice, once for getting count and another to fill the data
+    * `vkGetPhysicalDeviceSurfacePresentModesKHR` - to get presentation mode, called twice, once for getting count and another to fill the data
+
+# Resource
+
+* [vulkan-tutorial.com](https://vulkan-tutorial.com/)
+* [Graphics Pipeline](https://vulkan-tutorial.com/images/vulkan_simplified_pipeline.svg)
+
+\
+\
+`First published on April, 18, 2020`
