@@ -27,3 +27,4 @@ for this blog.
 | 19 | Linux, OpenCL | [Make OpenCL 2.1 Works on Linux for AMD GPU](https://wasin.io/blog/19_make-opencl2-1-works-on-linux-for-AMD-gpu.html) |
 | 20 | OpenGl, Vulkan | [Vulkan is not always faster than OpenGL](https://wasin.io/blog/20_vulkan-not-always-faster-opengl.html) |
 | 21 | Vulkan | [Vulkan Overview in Code - Part I](https://wasin.io/blog/21_vulkan-overview-in-code-part1.html) |
+| 22 | Vulkan | [Vulkan pNext and Query for New Additional Structure](https://wasin.io/blog/22_vulkan-pNext-and-query-for-new-additional-structure.html) |
