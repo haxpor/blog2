@@ -1,0 +1,38 @@
+Vulkan pNext and Query for New Additional Structure
+=========================================================
+
+Whenever there's new revision of Vulkan spec, its SDK catches up. We will usually see new structures or function names with suffix of `2`.
+
+Let's take a slightly more complicated than usual to query for new revision structure added from previous spec version. To know whether the device supports [separate](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#features-separateDepthStencilLayouts) [Depth/Stencil layouts](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_separate_depth_stencil_layouts.html), we need to use `vkGetPhysicalDeviceFeatures2` function which involves strcutures `VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures`, and `VkPhysicalDeviceFeatures2` by setting the latter structure's `pNext` field to pointer of the former structure.
+
+The following code is how to do it.
+
+```
+    /* remember to set .sType for extension structure to hold the information */
+    VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures dsf = {};
+    dsf.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES;
+
+    /* create a required structure then set its .pNext to the former */
+    VkPhysicalDeviceFeatures2 query = {};
+    query.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    query.pNext = &dsf;
+    vkGetPhysicalDeviceFeatures2(physicalDevice, &query);
+```
+
+Now the following is extra information as if we would likely need to enable such feature on device whenever we create.
+
+```
+    VkDeviceCreateInfo createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfo.pNext = &dsf;
+    ...
+    
+    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+        throw std::runtime_error("failed to create device!");
+```
+
+The catch needed to be remember is that `sType` field of `dsf` variable above needs to be set. If you didn't set it, calling `vkGetPhysicalDeviceFeatures` won't set any returned value to `VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures`.
+
+\
+\
+`First published on April, 26, 2020`
