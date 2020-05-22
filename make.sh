@@ -13,7 +13,7 @@
 # if it detects a missing dependency then it will print out and exit immediately.
 check_requirement() {
     # the list of application the script depends on
-    dep_app_array=(firefox pandoc inotifywait)
+    dep_app_array=(pandoc inotifywait)
     
     for app in "${dep_app_array[@]}"
     do
@@ -198,8 +198,12 @@ if [ "$CMD" == "new" ]; then
     # pre-convert so users can see the result of .html now
     pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" --metadata pagetitle="$title" -o "$BUILD_DIR/${file_name%%.*}.html"
 
-    # now open the browser tab
-    ${BROWSER} $BUILD_DIR/${file_name%%.*}.html
+    # now open the browser tab (only if such program is available)
+    # if not then user should be opening this manually
+    which ${BROWSER} 2>&1 > /dev/null
+    if [ $? -ne 0 ]; then
+        ${BROWSER} $BUILD_DIR/${file_name%%.*}.html
+    fi
 
     # wait and listen to file changes event for writing
     # note: don't try to execute this in the background, it's mess to clean up later
