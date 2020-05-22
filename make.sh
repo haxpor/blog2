@@ -200,9 +200,17 @@ if [ "$CMD" == "new" ]; then
 
     # now open the browser tab (only if such program is available)
     # if not then user should be opening this manually
-    which ${BROWSER} 2>&1 > /dev/null
-    if [ $? -ne 0 ]; then
-        ${BROWSER} $BUILD_DIR/${file_name%%.*}.html
+    if grep -q Microsoft /proc/version; then
+        # for Windows target browser has .exe extention
+        if [ ${BROWSER} == "firefox" ]; then
+            # make sure path is properly set
+            ${BROWSER}.exe $BUILD_DIR/${file_name%%.*}.html
+        fi
+    else
+        which ${BROWSER} 2>&1 > /dev/null
+        if [ $? -ne 0 ]; then
+            ${BROWSER} $BUILD_DIR/${file_name%%.*}.html
+        fi
     fi
 
     # wait and listen to file changes event for writing
