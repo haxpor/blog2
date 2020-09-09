@@ -14,8 +14,8 @@ This project doesn't aim to provide good looking website thus style. Pure focus 
 `make.sh` depends on
 
 * `firefox` - technically can be anything, but it's just I use firefox so...
-* `pandoc` - to process .txt into .html
-* `inotifywait` - to listen to file events then do our custom operations on top
+* `pandoc` - to process .txt into .html (package `pandoc` for Debian/Ubuntu)
+* `inotifywait` - to listen to file events then do our custom operations on top (package `inotify-tools` for Debian/Ubuntu)
 
 ## How to use
 
