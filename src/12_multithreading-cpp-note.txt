@@ -8,7 +8,7 @@ programming in C++ upon my studying. There is also example code demonstrating so
 
 STL Names | Note
 ----------------|--------------------------------------------------------
-`std::deter_lock`|Do not acquire ownership of the mutex. Defer locking. Use when users want to create a mutex-lock (for example `std::lock`, `std::unique_lock`) without owning the mutex before actually create ones that own it; note that we can specify `locking strategy` via mutex wrappers (i.e. `std::lock_guard`, `std::unique_lock`)' constructor's parameter.
+`std::defer_lock`|Do not acquire ownership of the mutex. Defer locking. Use when users want to create a mutex-lock (for example `std::lock`, `std::unique_lock`) without owning the mutex before actually create ones that own it; note that we can specify `locking strategy` via mutex wrappers (i.e. `std::lock_guard`, `std::unique_lock`)' constructor's parameter.
 `std::try_to_lock`|Try to acquire ownership of the mutex without locking. It call `std::mutex::try_lock` at the constructor method to determine whether it should own such `std::mutex` or not.
 `std::adopt_lock`|Assume the calling thread already has ownership of the mutex (assume previously locked).
 
@@ -76,3 +76,7 @@ Topic | URLs
 
 * <small>Added info that `std::future` is implemented using `std::thread` as its underlying.</small>
 * <small>Fixed grammar error for `std::atomic`.</small>
+
+`Dec, 26, 2020`
+
+* <small>Fixed typo from `std::deter_lock` to `std::defer_lock`. </small>
