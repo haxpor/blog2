@@ -200,7 +200,7 @@ if [ "$CMD" == "new" ]; then
 
     # now open the browser tab (only if such program is available)
     # if not then user should be opening this manually
-    if grep -q Microsoft /proc/version; then
+    if grep -q -i microsoft /proc/version; then
         # for Windows target browser has .exe extention
         if [ ${BROWSER} == "firefox" ]; then
             # make sure path is properly set
