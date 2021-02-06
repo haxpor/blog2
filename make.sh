@@ -70,6 +70,10 @@ print_help() {
     echo "                 build only index.txt into index.html"
     echo ""
     echo "  list  - List all of the posts"
+	echo ""
+	echo "          Usage: list [--no-format]"
+	echo ""
+	echo "          --no-format no aligned format, suitablefor small screen width."
     echo ""
     echo "  clean - Clean all files inside build directory (build/)"
     echo ""
@@ -124,9 +128,9 @@ list_allposts() {
         title=$(head -1 "$file")
 
         if [ "$1" == "--no-format" ]; then
-            printf "%s ${YELLOW} %s ${NC} ${GREEN}[${NC}%s${GREEN}]${NC}\n" "$file" "$title" "$pub_string"
+            printf "%s ${YELLOW}%s${NC} ${GREEN}[${NC}%s${GREEN}]${NC}\n" "$file" "$title" "$pub_string"
         else
-            printf "%60s ${YELLOW} %60s ${NC} ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$title" "$pub_string"
+            printf "%60s ${YELLOW}%60s${NC} ${GREEN}[${NC}%15s${GREEN}]${NC}\n" "$file" "$title" "$pub_string"
         fi
 
     done
