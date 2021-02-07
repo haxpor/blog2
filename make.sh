@@ -218,6 +218,7 @@ if [ "$CMD" == "new" ]; then
 	fi
 
 	# wait and listen to file changes event for writing.
+	# this is a blocking call infinitely wait until exit this process (theoridically after user finishes editing the post)
 	# note: don't try to execute this in the background, it's mess to clean up later
 	while inotifywait -e modify "src/$file_name" || true; do pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" --metadata pagetitle="$title" -o "$BUILD_DIR/${file_name%%.*}.html" ; done
 	# show error messasge when things went wrong
