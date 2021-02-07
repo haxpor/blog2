@@ -212,7 +212,7 @@ if [ "$CMD" == "new" ]; then
         fi
     else
         which ${BROWSER} 2>&1 > /dev/null
-        if [ $? -ne 0 ]; then
+        if [ $? -eq 0 ]; then
             ${BROWSER} $BUILD_DIR/${file_name%%.*}.html
         fi
     fi
