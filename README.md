@@ -28,3 +28,4 @@ for this blog.
 | 20 | OpenGl, Vulkan | [Vulkan is not always faster than OpenGL](https://wasin.io/blog/20_vulkan-not-always-faster-opengl.html) |
 | 21 | Vulkan | [Vulkan Overview in Code - Part I](https://wasin.io/blog/21_vulkan-overview-in-code-part1.html) |
 | 22 | Vulkan | [Vulkan pNext and Query for New Additional Structure](https://wasin.io/blog/22_vulkan-pNext-and-query-for-new-additional-structure.html) |
+| 23 | C++ | [Implicit Conversion of Arguments Passed to Variadic function](https://wasin.io/blog/23_implicit_conversion_to_variadic_func.html) |
