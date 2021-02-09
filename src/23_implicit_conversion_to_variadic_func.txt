@@ -1,2 +1,290 @@
-Your Title Here
+Implicit Conversion of Arguments Passed to Variadic function
 =========================================================
+
+If an argument with a specific type (which we will see which type in this post)
+needs an _implicit conversion_ when passed to a variadic function, such behavior
+will trigger compiler's warning message which is on by default for  _clang_
+but not the others (GCC, and MSVC). It introduces a somewhat inconsistency in
+equal of handling across the compilers that we would need some awareness.
+
+So this post is more or less like an exploration to the compilers' behavior for
+this implicit conversion of arguments passed to variadic function; to see how we could trigger it,
+disable/enable such warning, reasoning behind, and solution.
+
+# What compilers we will test against
+
+We will explore this behavior with the following compilers. It tested on native
+Ubuntu 20.04 for GCC & Clang, and Windows 10 machine for MSVC.
+
+* Clang version 9.0 (specifically 9.0.1-12)
+* MSVC 2019 x64 v.19.28.29336
+* GCC v.9.3.0 (specifically 9.3.0-17ubuntu~20.04)
+
+# Test cases
+
+Let's say we have the following function
+
+```
+static void FreeLog(const char* fmt, ...)
+{
+	va_list arglist;
+	va_start(arglist, fmt);
+	std::vprintf(fmt, arglist);
+	va_end(arglist);
+}
+```
+
+> You can find the reference of the full source code at the bottom of this code at _Reference_ section,
+or you could gradually code it up while reading this.
+
+This function is defined in global scope outside of the `main()` function.
+
+No need to worry too much about the code inside `FreeLog()`. We just want to have some code
+that consumes what we would be sending in as arguments. The attention will weight more on compilation phase.
+
+There are 3 test cases.
+
+## Test case 1 : Simple literal string & Scalar numbers
+
+Now let's consume it with the following code inside `main()` function.
+
+```
+FreeLog("1: %f %s\n", 10.0, "Helloworld");
+```
+
+if we try to compile above code against all compilers listed above with
+compile options for highest warning verbosity but still practical as follows
+
+* Clang - `clang++ -std=c++17 -Wall -Wextra -pedantic ClangImplicitConversion.cpp`
+* GCC   - `g++     -std=c++17 -Wall -Wextra -pedantic ClangImplicitConversion.cpp`
+* MSVC  - `cl.exe  /EHsc /std:c++17 /W4 ClangImplicitConversion.cpp`
+
+It should compile without any noticing and relevant warnings to our case.
+It will print the following output.
+
+```
+1: 10.000000 Hello world
+```
+
+Arguments passed in as exact type directly, no implicit, or type complications
+to worry. Then, all is fine!
+
+Now, proceed to the next one.
+
+> *Note*: `printf` and its variants only accept `double`, although we would see `"%f"` which pretty much signifies `float` but at the final it treats it as `double`. So there's no data conversion whatsoever there. Except if use `scanf` and its variants in which `"%f"` means `float`, and `"%lf"` means `double`.
+
+## Test case 2 : Trivial Type
+
+Now we get into a little bit more complicated by involving _trivial_ type called `Pod`.
+
+```
+struct Pod
+{
+	double foo;
+	const char* bar;
+
+	operator const char*() const { return bar; }
+};
+```
+
+Notice we have defined a user-defined conversion function so that we can just supply the object of type `Pod`
+to any function that expects to receive `const char*`. Also it is suitable for our test
+with implicit conversion.
+
+Firstly validate and make sure such object declaration is really trivial. Make sure you include header `<type_traits>`.
+
+```
+static_assert(std::is_trivial<Pod>::value, "Pod structure must be trivial type");
+```
+
+then we get into the meat of this test case
+
+```
+Pod st { 10.0, "Bar text" };
+FreeLog("2: %f %s\n", st.foo, st);
+```
+
+Notice the second argument which we pass in `st` mapping to `%s` such that
+it will use our user-defined conversion function from `Pod` to `const char*`.
+
+Compile with compile options as seen in _Test case 1_.
+All is fine again from all compilers.
+
+## Test case 3 : Non-trivial Type
+
+Last test case, now we go with _non-trivial_ type with the following declaration
+
+```
+template<class T, size_t SIZE>
+struct MyStringWrapper
+{
+public:
+	typedef T                     value_type;
+	typedef const value_type*     const_str;
+public:
+	MyStringWrapper(const_str str)
+	{
+		std::strcpy(strBuf, str);
+	}
+
+	~MyStringWrapper() { }
+
+	operator const_str() const { return strBuf; }
+private:
+	value_type strBuf[SIZE];
+};
+```
+
+It is a minimal implementation of template string wrapper, just to return internal
+array of characters as a c-string pointer.
+
+Not to be too much paying attention to template declaration, it would be similar case for this test case
+even with normal class declaration.
+
+For a little bit of convenience, we will `typedef` it.
+
+```
+typedef MyStringWrapper<char, 512> MyString;
+```
+
+Now start with our validation to make sure our understanding of such type is correct
+
+```
+static_assert(!std::is_trivial<MyString>::value, "MyString must be non-trivial type");
+```
+
+Then follow by the meat of this test case
+
+```
+MyString myStr("Hello world");
+FreeLog("3: %s\n", myStr);
+```
+
+As usual, compile and run program with above compile options.
+
+We will see the following result only from *clang*
+
+```
+ClangImplicitConversion.cpp:93:21: error: cannot pass object of non-trivial type 'MyString' (aka 'MyStringWrapper<char, 512>') through variadic function; call will abort at runtime [-Wnon-pod-varargs]
+        FreeLog("3: %s\n", myStr);
+                           ^
+1 error generated.
+```
+
+But other compilers keep quiet about it.
+
+# Why ?
+
+The reason about this is stated in C++ standardese terms
+
+From C++17 latest draft N4659 [expr.call 8.2.2/9]
+> Passing a potentially-evaluated argument of class type (Clause 12) having a non-trivial copy constructor, a non-trivial move constructor, or a non-trivial destructor, with no corresponding parameter, is conditionally-supported with implementation-defined semantics.
+
+So it's up to compiler's specific implementation on how to deal with it. Thus we
+see different behavior across compilers we've tested so far.
+
+Anyway, it would be a red herring to see this warning coming out from just
+only one compiler especially if we are using an in-house automated build system. It will
+definitely catch our eyes for this inconsistency behavior across the board.
+
+Next question is how we can control this...?
+
+# Turn on the warning for GCC & MSVC
+
+## GCC
+
+There is a [discussion](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64867) (reported as bug) for non-POD type that supplied into variadic function
+that GCC itself didn't warn about anything by default. Such report dated back in 2015!
+
+We can opt-in turning on `-Wconditionally-supported`. This particular warning option
+of [conditionally-supported behavior](https://gcc.gnu.org/onlinedocs/gcc/Conditionally-supported-behavior.html)
+covers multiple of things not just our case. It's compiler implementation specific
+whether or not to support certain behaviors.
+
+So change the compile options to
+
+`g++     -std=c++17 -Wall -Wextra -pedantic -Wconditionally-supported ClangImplicitConversion.cpp`
+
+Now we would see the following warning instead
+
+```
+ClangImplicitConversion.cpp: In function ‘int main()’:
+ClangImplicitConversion.cpp:92:26: warning: passing objects of non-trivially-copyable type ‘MyString’ {aka ‘struct MyStringWrapper<char, 512>’} through ‘...’ is conditionally supported [-Wconditionally-supported]
+   92 |  FreeLog("3: %s\n", myStr);
+      |
+```
+
+Notice the warning message saying `non-trivially-copyable` in which we can do one step more
+by validating against `std::is_trivially_copyable` but that might not be necessary (at least for our case) as
+a type that regarded as trivially copyable means that type would at least be trivial object.
+
+So in case we want to be more pedantic about `non-trivially-copyable` to check base with our understanding,
+we can add the following line after the line of `std::is_trivial`.
+
+```
+static_assert(!std::is_trivially_copyable<MyString>::value, "MyString must be non-trivially-copyable type");
+```
+
+> At very least, feel free to consult [cppreferences](https://en.cppreference.com/w/cpp/types/is_trivially_copyable), or
+consult `[basic.types], no.9` about trivially copyable types.
+
+> We noticed that it shows as `warning` not `error` like the case of clang. That's because we didn't tell compiler to treat warning as error. We can do that by supplying `-Werror`.
+
+## MSVC
+
+I did some research, and the best I came across is from MSVC C++ team
+which decided to only [implement checking against the standard `printf/scanf` functions](https://devblogs.microsoft.com/cppblog/format-specifiers-checking/)
+and not support user-defined function.
+
+So we are at the mercy of the compiler's ability. In case, you find a new announcement or update on this,
+please feel free to let me know.
+
+### Extra
+
+To see the effect of warning for `printf` function, we can add
+
+```
+std::printf("3: %s\n", myStr);
+```
+
+It will output a warning message like below
+
+```
+ClangImplicitConversion.cpp(95): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'MyString'
+```
+
+# Turn off the warning for Clang
+
+As it's turned on by default, then we would like to know how to turn it off.
+
+We use `-Wno-non-pod-varargs` to disable such warning (which is error by default). <sub>[Ref](https://clang.llvm.org/docs/DiagnosticsReference.html#wnon-pod-varargs)</sub>
+
+# Stop above madness
+
+You can control it from the code by being explicit in data type casting.
+It will cover either trivial or non-trivial type case.
+
+So changing the following line
+
+```
+MyString myStr("Hello world");
+FreeLog("3: %s\n", myStr);
+```
+
+to
+
+```
+MyString myStr("Hello world");
+FreeLog("3: %s\n", static_cast<const char*>(myStr));
+```
+
+provided that `MyString` already have user-defined conversion function to `const char*`.
+Then clang would no longer output warning message. Other compilers continue as normal.
+
+# Reference
+
+Test case source code can be found on my Github, direct URL is at [ClangImplicitConversion.cpp](https://github.com/haxpor/cpp_st/blob/master/ClangImplicitConversion.cpp).
+
+\
+\
+`First published on February, 9, 2021`
