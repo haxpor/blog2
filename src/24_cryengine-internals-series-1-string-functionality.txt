@@ -1,0 +1,154 @@
+CryEngine Internals Series #1 - String Types
+=========================================================
+
+This is going to be the starting of _CryEngine Internals Series_. We will explore
+the code base, and study together various sub-systems as they are the foundation of what makes CryEngine as a whole.
+
+The code base is publicly exposed to end-users (or otherwise noted if it happen to be living inside internal development branch but I have permission to share them with you).
+
+Each post in the series will be marked with `#<number>` e.g. `#1` for ease of referencing
+back later, as well as to be easily tracked for the progress of how far we have made into the series.
+
+---
+
+We will start by exploring string.
+
+There are going to be 3 parts
+
+1. **String Types**  
+	Touch the water by getting to know main string types provided by the engine.
+2. **String Types - Example Usages**  
+	Drill down slightly on how to practically use it with most frequently used functions of those string types.
+3. **String Utilities**  
+	There are ton of low-level string utilities provided by the engine, we will get to know them. They are very handy.
+
+Although Crytek has maintained internal development branch, and public branch on Github. Differences between these
+twos as of the moment of this writing for strings are very minimal; mostly about modernization of C++ syntax. But the core is pretty much the same.
+
+There are 3 main string header files located inside `Code/CryEngine/CryCommon/CryString` directory that defined
+string types we can use for various situations
+
+1. `CryString.h` <sub>[Ref](https://github.com/CRYTEK/CRYENGINE/blob/5.6.7/Code/CryEngine/CryCommon/CryString/CryString.h)</sub>
+2. `CryFixedString.h` <sub>[Ref](https://github.com/CRYTEK/CRYENGINE/blob/5.6.7/Code/CryEngine/CryCommon/CryString/CryFixedString.h)</sub> 
+3. `HashedString.h` <sub>[Ref](https://github.com/CRYTEK/CRYENGINE/blob/5.6.7/Code/CryEngine/CryCommon/CryString/HashedString.h)</sub>
+
+> Ref links above points to CryEngine's Github release version 5.6.7.
+
+# ● `CryString.h` 
+
+## `string` & `wstring`
+
+Its definition depends on whether a definition `NOT_USE_CRY_STRING` is defined or not.
+If so, then it falls back to use STL strings i.e. `std::string`, and `std::wstring`.
+
+As we know, STL's strings manage memory on heap. So you have to be careful mostly about performance hit if declare to use it too frequently in hot codepath.
+
+But if `NOT_USE_CRY_STRING` is not defined, then we will be using the following 2 groups depending on whether `RESOURCE_COMPILER` is defined or not.
+
+Their typedef definitions are as follows
+
+1st group: if `RESOURCE_COMPILER` is defined
+
+* `typedef CryStringLocalT<char> string;`
+* `typedef CryStringLocalT<wchar_t>	wstring;`
+
+2nd group: if `RESOURCE_COMPILER` is **not** defined
+
+* `typedef CryStringT<char> string;`
+* `typedef CryStringT<wchar_t> wstring;`
+
+Main code base (per se main engine source code, not most of the tools, or RC) doesn't define `RESOURCE_COMPILER`, so we will be using the second group above.
+
+> `RESOURCE_COMPILER` is defined for some projects like tools (locates at `Code/Tools`), or RC (Resource compiler; yep exactly the name; locates at `Code/Tools/RC`) project.
+
+> **Fun fact**: Amount of usage of `string` compared to `stack_string` is ~10x more at the time of this writing measured from internal development branch.
+
+### `CryStringT` <sub>[Ref](https://github.com/CRYTEK/CRYENGINE/blob/5.6.7/Code/CryEngine/CryCommon/CryString/CryString.h#L27-L451)</sub>
+
+This variant is reference-tracked string which helps solved situation if we need to avoid heap memory allocation. So
+we can pass this type of string around even across threads.
+
+This is the *main* type of string used in code base.
+
+### `CryStringLocalT` <sub>[Ref](https://github.com/CRYTEK/CRYENGINE/blob/5.6.7/Code/CryEngine/CryCommon/CryString/CryString.h#L2330-L2541)</sub>
+
+This string type aims to provide string that doesn't share memory with other strings.
+By closely compare to `CryStringT`, if look at the code, at a glance we see both types are really
+the similar but the core difference is at constructor function chosen to be called by `CStringLocalT` is
+variant of constructors from `CryStringT`.
+
+So we will have a local managed string in memory not share with other strings.
+
+The implementation is very simple that deceives the eyes, but above is the difference.
+
+> It can be used via another name `CryStringLocal` which is shorted for `CryStringLocalT<char>`.
+
+## (Bonus & Optional) `CConstCharWrapper` <sub>[Ref](https://github.com/CRYTEK/CRYENGINE/blob/5.6.7/Code/CryEngine/CryCommon/CryString/CryString.h#L453-L479) (<font color="red">used internally</font>)</sub>
+
+This is merely used internally not elsewhere. It is a wrapper used as part of string creation without
+memory allocation. Its destructor function doesn't free any memory, but let higher up string class to manage it.
+It instead sets string to empty.
+
+Notice the use of constant string, and its `GetCharPointer()` to remove such `const` via `const_cast<char*>` to return `char` pointer.
+
+It works internally by `CryStringT` to construct an object from its constructor function.
+
+----
+
+# ● `CryFixedString.h`
+
+## `stack_string` <sub>[Ref](https://github.com/CRYTEK/CRYENGINE/blob/5.6.7/Code/CryEngine/CryCommon/CryString/CryFixedString.h#L230-L1908)</sub>
+
+It is `typedef`ed to be `CryStackStringT<char, 512>`.
+
+It is always available to be used, no pre-processor definition would decide its availability.
+The string is allocated on stack, so it's much more suitable if you need to use it in hot codepath e.g. in situation of logging a message out into file or console every now and then, thus we can avoid heap allocation unnecessary which could hurt performance.
+
+It is defined as
+
+* `typedef CryStackString<char, 512>		stack_string;`
+
+## `CryFixedWStringT` <sub>[Ref](https://github.com/CRYTEK/CRYENGINE/blob/5.6.7/Code/CryEngine/CryCommon/CryString/CryFixedString.h#L1918-L1964)</sub>
+
+This is a template specialization for `wchar_t` which inherits from `CryStackStringT`.
+
+## `CCryFixedStringListT` <sub>[Ref](https://github.com/CRYTEK/CRYENGINE/blob/5.6.7/Code/CryEngine/CryCommon/CryString/CryFixedString.h#L1966-L2008)</sub>
+
+This is a simple fixed list of `CryFixedStringT` with fixed string size, and maximum elements in the list.
+Note leading with `CC` for its type name.
+
+## `CryPathString` <sub>[Ref](https://github.com/CRYTEK/CRYENGINE/blob/5.6.7/Code/CryEngine/CryCommon/CryString/CryFixedString.h#L2053-L2054)</sub>
+
+Regarded as special string mainly used for represent file path.
+Each platform defines the maximum length of characters through `_MAX_PATH`.
+
+Its type defined as
+
+`typedef CryStackStringT<char, _MAX_PATH> CryPathString`.
+
+* For Apple, and Linux, if `_MAX_PATH` not defined, it will be set to 256.
+* For PS (Playstation), if `_MAX_PATH` not defined, it will be set to 1024.
+* For Windows, it is as part of MSVC compiler <sub>[Ref](https://docs.microsoft.com/en-us/cpp/c-runtime-library/path-field-limits?view=msvc-160)</sub> which usually defined to be 260 unless user modifies to allow long path string which will be more than that.
+
+----
+
+# ● `HashedString.h`
+
+## `CHashedString` <sub>[Ref](https://github.com/CRYTEK/CRYENGINE/blob/5.6.7/Code/CryEngine/CryCommon/CryString/HashedString.h)</sub>
+
+Basically it is a hashed string. It accepts normal string input, then store its hashed representation of it
+with an option to store the original string if needed.
+
+It's always available to be used, no pre-processor definition would decide its availability.
+
+There are 2 definitions which affect the functionality provided as follows (only for non-release build)
+
+1. `HASHEDSTRING_STORES_SOURCE_STRING`			- for debugging purpose, store original string
+2. `HASHEDSTRING_CHECKS_FOR_HASH_CONFLICTS`		- will also compare string even if hashed strings are equal
+
+Its hashing function `GetHashAsString` is very simple that it gets the first 32-bit (`uint32`) data from input
+string converted into hexadecimal of 8 characters.
+
+\
+\
+`First published on March, 9, 2021`
