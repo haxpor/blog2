@@ -1,0 +1,21 @@
+How to add application (.desktop) to ubuntu launcher?
+=========================================================
+
+A quick note on how to add your application (mostly installed manually, not through package manager) so we can launch such application quickly from the launcher can be found in this article.
+
+Let's take a good example from blender. Steps as follows.
+
+1. Download a pre-built binary of blender from [official website](https://www.blender.org/download/).
+2. Extract it in your desire path as well as renaming your extracted directory into version string. My case is at `/opt/blender/2.92.0`. (This is good practice as later you can have multiple versions of blender installed into the same parent directory, then symlink a desire version to use in which we can switch to one anothe later.)
+3. Create a symbolic link namely `blender` pointing to the desire version you will be using with `sudo ln -s /opt/blender/2.92.0 /opt/blender/blender`.
+4. Blender ships with `blender.desktop` we can make use of it instead of creating a new one. Just symlink it to proper location that launcher will be able to source in. Execute `sudo ln -s /opt/blender/2.92.0/blender.desktop /usr/share/applications/blender.desktop`.
+5. Copy its icon image to a proper location via `cp -av /opt/blender/2.92.0/blender.svg ~/.local/share/icons/blender.svg` (amidst the global one is at `/usr/share/icons/`).
+6. Update cache database of desktop files with `sudo update-desktop-database`.
+
+Then you can hit `Super` key (let's say Windows key), then type in blender. It should show the nice transparent icon and you should be able to launch blender.
+
+Validate its version at launch screen image. All done.
+
+\
+\
+`First published on March, 27, 2021`

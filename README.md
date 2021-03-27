@@ -29,3 +29,5 @@ for this blog.
 | 21 | Vulkan | [Vulkan Overview in Code - Part I](https://wasin.io/blog/21_vulkan-overview-in-code-part1.html) |
 | 22 | Vulkan | [Vulkan pNext and Query for New Additional Structure](https://wasin.io/blog/22_vulkan-pNext-and-query-for-new-additional-structure.html) |
 | 23 | C++ | [Implicit Conversion of Arguments Passed to Variadic function](https://wasin.io/blog/23_implicit_conversion_to_variadic_func.html) |
+| 24 | C++, CryEngine | [CryEngine Internals Series #1 - String Types](https://wasin.io/blog/24_cryengine-internals-series-1-string-functionality.html) |
+| 25 | Ubuntu | [How to add application (.desktop) to ubuntu launcher?](https://wasin.io/blog/25_how_to_add_application_desktop_file_to_ubuntu_launcher.html) |
