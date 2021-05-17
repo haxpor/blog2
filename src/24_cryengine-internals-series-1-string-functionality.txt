@@ -146,9 +146,10 @@ There are 2 definitions which affect the functionality provided as follows (only
 1. `HASHEDSTRING_STORES_SOURCE_STRING`			- for debugging purpose, store original string
 2. `HASHEDSTRING_CHECKS_FOR_HASH_CONFLICTS`		- will also compare string even if hashed strings are equal
 
-Its hashing function `GetHashAsString` is very simple that it gets the first 32-bit (`uint32`) data from input
-string converted into hexadecimal of 8 characters.
-
 \
 \
 `First published on March, 9, 2021`
+
+`May, 17, 2021`
+
+* Removed wrong information about `GetHashAsString()` stating that it will only hash for first 8 characters of input string. It is not the case. Length of the string is not the limited factor here.
