@@ -20,7 +20,7 @@ to version, or release to release. It's there.
 
 All compilers' source code we will be inspecting are provided through git repository
 
-* GCC - `git://gcc.gnu.org/git/gcc.git SomeLocalDir` <sub><a href="https://gcc.gnu.org/git.html">ref</a></sub>
+* GCC - `git://gcc.gnu.org/git/gcc.git` <sub><a href="https://gcc.gnu.org/git.html">ref</a></sub>
 * Clang - `git@github.com:llvm/llvm-project.git` <sub><a href="https://llvm.org/docs/GettingStarted.html#checkout">ref</a></sub>
 * MSVC - `git@github.com:microsoft/STL.git` <sub><a href="https://github.com/microsoft/STL">ref</a></sub>
 
@@ -321,7 +321,7 @@ From above, we can <font color="red">conclude</font> that
 
 Alternatively, instead of inspecting from withing git repository, we can also
 just take a look at header file on your system e.g. `/usr/include/c++/9/ostream`
-for GCC v.9.x as it is an inline implemenation. But I will reference from git
+for GCC v.9.x as it is an inline implementation. But I will reference from git
 repository for consistency as did previously.
 
 ## GCC
@@ -375,3 +375,7 @@ From above, we can <font color="red">conclude</font> that
 \
 \
 `First published on June, 14, 2021`
+
+`June, 14, 2021`
+
+* Fixed typos.
