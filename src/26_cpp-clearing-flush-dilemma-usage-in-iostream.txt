@@ -1,0 +1,377 @@
+Clearing flush() Dilemma Usage in iostream
+=========================================================
+
+We often hear a few questions revolving around flushing the stream especially from
+`std::cout`, `std::cerr`, and similar others.
+
+Those questions might be
+
+* Would `"\n"` automatically flush the stream?
+* Should we manually call `std::basic_ostream::flush()` function just before the `main()` program finishes?
+* Are `"\n"` and `std::endl` equivalent?
+* Will I need to manually call `flush()` after `std::endl`?
+* Do I need to `flush()` if I use `std::cerr`?
+* ... (more in similar tone of questions)
+
+Let's get above tone of questions answered by studying source code of three major compilers
+out there namely GCC, Clang, and MSVC. Specific version won't be matter much as
+the topic at hands regarding to iostream is rarely changing from version
+to version, or release to release. It's there.
+
+All compilers' source code we will be inspecting are provided through git repository
+
+* GCC - `git://gcc.gnu.org/git/gcc.git SomeLocalDir` <sub><a href="https://gcc.gnu.org/git.html">ref</a></sub>
+* Clang - `git@github.com:llvm/llvm-project.git` <sub><a href="https://llvm.org/docs/GettingStarted.html#checkout">ref</a></sub>
+* MSVC - `git@github.com:microsoft/STL.git` <sub><a href="https://github.com/microsoft/STL">ref</a></sub>
+
+# How do those streams constructed?
+
+> Mostly I just use `grep` to search through things. With this particular example to
+  see how it's constructed, you can try `grep -nr tie.*cout` then it would likely
+  take you to the source file which includes construction of stream objects. Why
+  search for `tie`? Because it's the one time setup to set one stream to depend(-ish)
+  on another stream.
+
+Seeing source code related to this section alone can answer several questions
+we had in mind already. Let's list out such code first below.
+
+## GCC
+
+Take a look at `libstdc++-v3/src/c++98/ios_init.cc`.
+
+```
+  ios_base::Init::Init()
+  {
+    if (__gnu_cxx::__exchange_and_add_dispatch(&_S_refcount, 1) == 0)
+      {
+	// Standard streams default to synced with "C" operations.
+	_S_synced_with_stdio = true;
+
+	new (&buf_cout_sync) stdio_sync_filebuf<char>(stdout);
+	new (&buf_cin_sync) stdio_sync_filebuf<char>(stdin);
+	new (&buf_cerr_sync) stdio_sync_filebuf<char>(stderr);
+
+	// The standard streams are constructed once only and never
+	// destroyed.
+	new (&cout) ostream(&buf_cout_sync);
+	new (&cin) istream(&buf_cin_sync);
+	new (&cerr) ostream(&buf_cerr_sync);
+	new (&clog) ostream(&buf_cerr_sync);
+	cin.tie(&cout);
+	cerr.setf(ios_base::unitbuf);
+	// _GLIBCXX_RESOLVE_LIB_DEFECTS
+	// 455. cerr::tie() and wcerr::tie() are overspecified.
+	cerr.tie(&cout);
+
+#ifdef _GLIBCXX_USE_WCHAR_T
+	new (&buf_wcout_sync) stdio_sync_filebuf<wchar_t>(stdout);
+	new (&buf_wcin_sync) stdio_sync_filebuf<wchar_t>(stdin);
+	new (&buf_wcerr_sync) stdio_sync_filebuf<wchar_t>(stderr);
+
+	new (&wcout) wostream(&buf_wcout_sync);
+	new (&wcin) wistream(&buf_wcin_sync);
+	new (&wcerr) wostream(&buf_wcerr_sync);
+	new (&wclog) wostream(&buf_wcerr_sync);
+	wcin.tie(&wcout);
+	wcerr.setf(ios_base::unitbuf);
+	wcerr.tie(&wcout);
+#endif
+
+	// NB: Have to set refcount above one, so that standard
+	// streams are not re-initialized with uses of ios_base::Init
+	// besides <iostream> static object, ie just using <ios> with
+	// ios_base::Init objects.
+	__gnu_cxx::__atomic_add_dispatch(&_S_refcount, 1);
+      }
+  }
+
+```
+
+## Clang
+
+Look at `libcxx/src/iostream.cpp`.
+
+```
+DoIOSInit::DoIOSInit()
+{
+    force_locale_initialization();
+
+#ifndef _LIBCPP_HAS_NO_STDIN
+    istream* cin_ptr  = ::new(cin)  istream(::new(__cin)  __stdinbuf <char>(stdin, &mb_cin));
+    wistream* wcin_ptr  = ::new(wcin)  wistream(::new(__wcin)  __stdinbuf <wchar_t>(stdin, &mb_wcin));
+#endif
+#ifndef _LIBCPP_HAS_NO_STDOUT
+    ostream* cout_ptr = ::new(cout) ostream(::new(__cout) __stdoutbuf<char>(stdout, &mb_cout));
+    wostream* wcout_ptr = ::new(wcout) wostream(::new(__wcout) __stdoutbuf<wchar_t>(stdout, &mb_wcout));
+#endif
+    ostream* cerr_ptr = ::new(cerr) ostream(::new(__cerr) __stdoutbuf<char>(stderr, &mb_cerr));
+                        ::new(clog) ostream(cerr_ptr->rdbuf());
+    wostream* wcerr_ptr = ::new(wcerr) wostream(::new(__wcerr) __stdoutbuf<wchar_t>(stderr, &mb_wcerr));
+                          ::new(wclog) wostream(wcerr_ptr->rdbuf());
+
+#if !defined(_LIBCPP_HAS_NO_STDIN) && !defined(_LIBCPP_HAS_NO_STDOUT)
+    cin_ptr->tie(cout_ptr);
+    wcin_ptr->tie(wcout_ptr);
+#endif
+    _VSTD::unitbuf(*cerr_ptr);
+    _VSTD::unitbuf(*wcerr_ptr);
+#ifndef _LIBCPP_HAS_NO_STDOUT
+    cerr_ptr->tie(cout_ptr);
+    wcerr_ptr->tie(wcout_ptr);
+#endif
+}
+```
+
+## MSVC
+
+Look at `stl/src/cout.cpp`, `stl/src/cerr.cpp`, `stl/src/cin.cpp`, and `stl/src/clog.cpp`.
+
+(`stl/src/cout.cpp`)
+```
+__PURE_APPDOMAIN_GLOBAL static filebuf fout(_cpp_stdout);
+
+#if defined(_M_CEE_PURE)
+__PURE_APPDOMAIN_GLOBAL extern ostream cout(&fout);
+
+#else // defined(_M_CEE_PURE)
+__PURE_APPDOMAIN_GLOBAL extern _CRTDATA2_IMPORT ostream cout(&fout);
+#endif // defined(_M_CEE_PURE)
+
+struct _Init_cout { // ensures that cout is initialized
+    __CLR_OR_THIS_CALL _Init_cout() { // initialize cout
+        _Ptr_cout = &cout;
+        if (_Ptr_cin != nullptr) {
+            _Ptr_cin->tie(_Ptr_cout);
+        }
+
+        if (_Ptr_cerr != nullptr) {
+            _Ptr_cerr->tie(_Ptr_cout);
+        }
+
+        if (_Ptr_clog != nullptr) {
+            _Ptr_clog->tie(_Ptr_cout);
+        }
+    }
+};
+```
+
+(`stl/src/cerr.cpp`)
+```
+__PURE_APPDOMAIN_GLOBAL static filebuf ferr(_cpp_stderr);
+
+#if defined(_M_CEE_PURE)
+__PURE_APPDOMAIN_GLOBAL extern ostream cerr(&ferr);
+
+#else // defined(_M_CEE_PURE)
+__PURE_APPDOMAIN_GLOBAL extern _CRTDATA2_IMPORT ostream cerr(&ferr);
+#endif // defined(_M_CEE_PURE)
+
+struct _Init_cerr { // ensures that cerr is initialized
+    __CLR_OR_THIS_CALL _Init_cerr() { // initialize cerr
+        _Ptr_cerr = &cerr;
+        cerr.tie(_Ptr_cout);
+        cerr.setf(ios_base::unitbuf);
+    }
+};
+```
+
+(`stl/src/cin.cpp`)
+```
+__PURE_APPDOMAIN_GLOBAL static filebuf fin(_cpp_stdin);
+
+#if defined(_M_CEE_PURE)
+__PURE_APPDOMAIN_GLOBAL extern istream cin(&fin);
+
+#else // defined(_M_CEE_PURE)
+__PURE_APPDOMAIN_GLOBAL extern _CRTDATA2_IMPORT istream cin(&fin);
+#endif // defined(_M_CEE_PURE)
+
+struct _Init_cin { // ensures that cin is initialized
+    __CLR_OR_THIS_CALL _Init_cin() { // initialize cin
+        _Ptr_cin = &cin;
+        cin.tie(_Ptr_cout);
+    }
+};
+```
+
+(`stl/src/clog.cpp`)
+```
+__PURE_APPDOMAIN_GLOBAL static filebuf flog(_cpp_stderr);
+
+#if defined(_M_CEE_PURE)
+__PURE_APPDOMAIN_GLOBAL extern ostream clog(&flog);
+
+#else // defined(_M_CEE_PURE)
+__PURE_APPDOMAIN_GLOBAL extern _CRTDATA2_IMPORT ostream clog(&flog);
+#endif // defined(_M_CEE_PURE)
+
+struct _Init_clog { // ensures that clog is initialized
+    __CLR_OR_THIS_CALL _Init_clog() { // initialize clog
+        _Ptr_clog = &clog;
+        clog.tie(_Ptr_cout);
+    }
+};
+```
+
+---
+
+From all above, We can <font color="red">conclude</font> that
+
+* `cin` tied to `cout`. This means any I/O operation done by `cin` will firstly
+  flush `cout`'s stream first. This is important as you always want to show everything
+  you have put onto output stream before asking any input from user.
+* `cerr` tied to `cout`. (same reason)
+* `clog` has been set up differently in MSVC compared to other twos. It is tied to `cerr` by using `std::basic_ios::tie()` (also with different approach in construct but is not in our concern). GCC and Clang are not tied to `cerr`. See [https://godbolt.org/z/ebYqrso5a](https://godbolt.org/z/ebYqrso5a) for my simple test to confirm this observation.
+* Difference of `clog` to `cerr` is down to one thing: `clog` is buffered, but `cerr` is not.
+* `cerr` is non-buffered stream as it set flag via `std::ios_base::setf()` with `unitbuf`<sub><a href="https://en.cppreference.com/w/cpp/io/ios_base/fmtflags">cppreferences - fmtflags</a></sub> which means it will automatically flush after each I/O operation done through function call.
+* From evidence of `tie()` and `setf()` calls, we can see that `cout`, `cin` and `clog` are buffered stream. `cerr` is non-buffered stream. These are true also for wide-character stream e.g. `wcout, `wcin`, `wclog`, and `wcerr`.
+
+# How do those streams destructed?
+
+## GCC
+
+(`libstdc++-v3/src/c++98/ios_init.cc`)
+```
+  ios_base::Init::~Init()
+  {
+    // Be race-detector-friendly.  For more info see bits/c++config.
+    _GLIBCXX_SYNCHRONIZATION_HAPPENS_BEFORE(&_S_refcount);
+    if (__gnu_cxx::__exchange_and_add_dispatch(&_S_refcount, -1) == 2)
+      {
+        _GLIBCXX_SYNCHRONIZATION_HAPPENS_AFTER(&_S_refcount);
+	// Catch any exceptions thrown by basic_ostream::flush()
+	__try
+	  {
+	    // Flush standard output streams as required by 27.4.2.1.6
+	    cout.flush();
+	    cerr.flush();
+	    clog.flush();
+
+#ifdef _GLIBCXX_USE_WCHAR_T
+	    wcout.flush();
+	    wcerr.flush();
+	    wclog.flush();
+#endif
+	  }
+	__catch(...)
+	  { }
+      }
+  }
+```
+
+## Clang
+
+(`libcxx/src/iostream.cpp`)
+```
+DoIOSInit::~DoIOSInit()
+{
+#ifndef _LIBCPP_HAS_NO_STDOUT
+    ostream* cout_ptr = reinterpret_cast<ostream*>(cout);
+    wostream* wcout_ptr = reinterpret_cast<wostream*>(wcout);
+    cout_ptr->flush();
+    wcout_ptr->flush();
+#endif
+
+    ostream* clog_ptr = reinterpret_cast<ostream*>(clog);
+    wostream* wclog_ptr = reinterpret_cast<wostream*>(wclog);
+    clog_ptr->flush();
+    wclog_ptr->flush();
+}
+```
+
+## MSVC
+
+Its implementation is slightly different than the other twos.
+`stl/inc/xiosbase` orchestrates the call to constructor and destructor which are
+`_Init_ctor()` and `_Init_dtor()` respectively.
+
+The actual implementation of destructor function can be seen at `stl/src/iostream.cpp`,
+`stl/src/wiostrea.cpp`.
+
+(`stl/src/iostream.cpp`)
+```
+_CRTIMP2_PURE void __cdecl ios_base::Init::_Init_dtor(ios_base::Init*) { // flush standard streams last time
+    if (--_Init_cnt == 0) { // flush standard streams
+        if (_Ptr_cerr != nullptr) {
+            _Ptr_cerr->flush();
+        }
+
+        if (_Ptr_clog != nullptr) {
+            _Ptr_clog->flush();
+        }
+
+        if (_Ptr_cout != nullptr) {
+            _Ptr_cout->flush();
+        }
+    }
+}
+```
+
+---
+
+From above, we can <font color="red">conclude</font> that
+
+* Whenever output streams get destructed, they will be automatically `flush()`.
+  This answers that prior to returning from `main()` function, there is no hard
+  requirement for users to call either `std::endl`, or manually `std::basic_ostream::flush()`,
+  or even add a `"\n"` (recall that this won't trigger flush). It will be
+  flushed eventually when program finishes.
+
+# Take a look at `std::endl`
+
+Alternatively, instead of inspecting from withing git repository, we can also
+just take a look at header file on your system e.g. `/usr/include/c++/9/ostream`
+for GCC v.9.x as it is an inline implemenation. But I will reference from git
+repository for consistency as did previously.
+
+## GCC
+
+(`libstdc++-v3/include/std/ostream`)
+```
+  template<typename _CharT, typename _Traits>
+    inline basic_ostream<_CharT, _Traits>&
+    endl(basic_ostream<_CharT, _Traits>& __os)
+    { return flush(__os.put(__os.widen('\n'))); }
+```
+
+## Clang
+
+(`libcxx/include/ostream`)
+```
+template <class _CharT, class _Traits>
+inline
+basic_ostream<_CharT, _Traits>&
+endl(basic_ostream<_CharT, _Traits>& __os)
+{
+    __os.put(__os.widen('\n'));
+    __os.flush();
+    return __os;
+}
+```
+
+## MSVC
+
+(`stl/inc/ostream`)
+```
+template <class _Elem, class _Traits>
+basic_ostream<_Elem, _Traits>& __CLRCALL_OR_CDECL endl(
+    basic_ostream<_Elem, _Traits>& _Ostr) { // insert newline and flush stream
+    _Ostr.put(_Ostr.widen('\n'));
+    _Ostr.flush();
+    return _Ostr;
+}
+```
+
+---
+
+From above, we can <font color="red">conclude</font> that
+
+* `std::endl` will add a newline character `"\n"` first before `flush()`. So it's
+  enough just to use `std::endl` without a need to manually call `flush()` again.
+* Take it from the face value as seen from the code, `"\n"` is not a substitution
+  for flushing. Better stick to what we have seen so far thus better *not* to
+  speculate that a newline character would equal to flushing the stream (`flush()`).
+
+\
+\
+`First published on June, 14, 2021`
