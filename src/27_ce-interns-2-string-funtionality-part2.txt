@@ -113,7 +113,6 @@ Name | Signature | Type | Description
 `toString` ~`11`~ | `string (const Vec3& v)` | Inline | Work similarly as ~`5`~.
 `toLowerInplace` ~`12`~ | `void (string& str)` | Inline | Same as ~`1`~ but avoid memory allocation by doing it in-place.
 `toLowerInplace` ~`13`~ | `void (char* str)` | Inline | Same as ~`12`~ but accepts an input as c-string type.
-`IsValidFileName` ~`14`~ | `bool (const char* fileName)` | Inline | Check if input filename (without file extension) is valid. Support ASCII only.
 </br>
 <center>**Table 6**: `Regular`</center>
 
@@ -149,10 +148,19 @@ Name | Signature | Type | Description
 `HashStringLowerSeed` ~`4`~ | `uint32 (const char* string, const uint32 seed)` | Inline | Same as ~`3`~ but works only with ASCII, and it will convert to lower-case.
 `HashString` ~`5`~ | `uint32 (const char* string)` | Inline | Just a wrapper function call to ~`3`~, but uses `CRY_DEFAULT_HASH_SEED` as a seed.
 `HashStringLower` ~`6`~ | `uint32 (const char* string)` | Inline | Just a wrapper function call to ~`4`~, but uses `CRY_DEFAULT_HASH_SEED` as a seed.
-`portable_splitpath` ~`7`~ | `void (const char* path, char* drive, char* dir, char* fname, char* ext)` | Force Inline | Split input path into individual components. If there is no drive existing in the path, then ignore it.
-`portable_makepath` ~`8`~ | `void (char* path, const char* drive, const char* dir, const char* fname, const char* ext)` | Force Inline | Build a path from components.
 </br>
-<center>**Table 9**: `Misc`</center>
+<center>**Table 9**: `Hashing`</center>
+
+</br></br></br>
+
+Name | Signature | Type | Description
+----------|--------------------|:-----:|------------------------------
+`toYesNoType` ~`1`~ | `toYesNoType (const char* szString)` | Inline | Parse yes/no string (it could be "yes", "enable", "true", and "1" with case-insensitive). Only support ASCII. Otherwise return `nYNT_Invalid`.
+`IsValidFileName` ~`2`~ | `bool (const char* fileName)` | Inline | Check if input filename (without file extension) is valid. Support ASCII only.
+`portable_splitpath` ~`3`~ | `void (const char* path, char* drive, char* dir, char* fname, char* ext)` | Force Inline | Split input path into individual components. If there is no drive existing in the path, then ignore it.
+`portable_makepath` ~`4`~ | `void (char* path, const char* drive, const char* dir, const char* fname, const char* ext)` | Force Inline | Build a path from components.
+</br>
+<center>**Table 10**: `Misc`</center>
 \
 \
 `First published on July, 24, 2021`
