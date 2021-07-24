@@ -32,3 +32,4 @@ for this blog.
 | 24 | C++, CryEngine | [CryEngine Internals Series #1 - String Types](https://wasin.io/blog/24_cryengine-internals-series-1-string-functionality.html) |
 | 25 | Ubuntu | [How to add application (.desktop) to ubuntu launcher?](https://wasin.io/blog/25_how_to_add_application_desktop_file_to_ubuntu_launcher.html) |
 | 26 | C++ | [Clearing flush() Dilemma Usage in iostream](https://wasin.io/blog/26_cpp-clearing-flush-dilemma-usage-in-iostream.html) |
+| 27 | C++, CryEngine | [CryEngine Internals Series #2 - String Utilities](https://wasin.io/blog/27_ce-interns-2-string-funtionality-part2.html) |
