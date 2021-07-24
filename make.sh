@@ -44,6 +44,9 @@ YELLOW='\033[93m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
+# mathjax
+MATHJAX_URL="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full"
+
 print_help() {
 	echo "Management script"
 	echo "Usage: make <operation> [options]"
@@ -200,7 +203,7 @@ if [ "$CMD" == "new" ]; then
 	title=$(head -1 "src/$file_name")
 
 	# pre-convert so users can see the result of .html now
-	pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" --metadata pagetitle="$title" -o "$BUILD_DIR/${file_name%%.*}.html"
+	pandoc --mathjax=$MATHJAX_URL -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" --metadata pagetitle="$title" -o "$BUILD_DIR/${file_name%%.*}.html"
 
 	# now open the browser tab (only if such program is available)
 	# if not then user should be opening this manually
@@ -220,7 +223,7 @@ if [ "$CMD" == "new" ]; then
 	# wait and listen to file changes event for writing.
 	# this is a blocking call infinitely wait until exit this process (theoridically after user finishes editing the post)
 	# note: don't try to execute this in the background, it's mess to clean up later
-	while inotifywait -e modify "src/$file_name" || true; do pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" --metadata pagetitle="$title" -o "$BUILD_DIR/${file_name%%.*}.html" ; done
+	while inotifywait -e modify "src/$file_name" || true; do pandoc --mathjax=$MATHJAX_URL -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" --metadata pagetitle="$title" -o "$BUILD_DIR/${file_name%%.*}.html" ; done
 	# show error messasge when things went wrong
 	if [ $? -ne 0 ]; then
 		echo "Can't listen to file changes event"
@@ -273,7 +276,7 @@ elif [ "$CMD" == "build" ]; then
 			# get title string from source file
 			title=$(head -1 "$file")
 
-			pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "$file" --metadata pagetitle="$title" -o "$BUILD_DIR/${oname}";
+			pandoc --mathjax=$MATHJAX_URL -c belug1.css -H header.html -B before.html -A after.html "$file" --metadata pagetitle="$title" -o "$BUILD_DIR/${oname}";
 
 			# show error messasge when things went wrong
 			if [ $? -ne 0 ]; then
@@ -329,7 +332,7 @@ elif [ "$CMD" == "build" ]; then
 			# get title string from source file
 			title=$(head -1 "$file")
 
-			pandoc --mathjax -c belug1.css -H header.html -B before.html -A after.html "$file" --metadata pagetitle="$title" -o "$BUILD_DIR/${oname}";
+			pandoc --mathjax=$MATHJAX_URL -c belug1.css -H header.html -B before.html -A after.html "$file" --metadata pagetitle="$title" -o "$BUILD_DIR/${oname}";
 
 			# show error messasge when things went wrong
 			if [ $? -ne 0 ]; then
