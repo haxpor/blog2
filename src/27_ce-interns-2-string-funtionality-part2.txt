@@ -1,0 +1,158 @@
+CryEngine Internals Series #2 - String Utilities
+=========================================================
+
+I decided to drop a writeup to cover "String Types - Example Usages" in order to
+move faster to the next following topic which is "String Utilities". It's mostly
+clear enough from the function signature to imagine what it looks like.
+
+See [#1](https://wasin.io/blog/24_cryengine-internals-series-1-string-functionality.html) for previous
+writeup about string types.
+
+---
+
+In CE (CryEngine, from now I will be mostly referring to it like that) code base,
+there are bunch of low-level string utility functions that deal with c-string type,
+and either `std::string` or CE's own `string` type with manual loop to process.
+
+Mostly it tries to avoid heap allocation purely using convenient
+`std::string`, and serves as a lower level for higher-order function used
+in various types e.g. `CryStringLocalT`, `CryStringT`, or other systems in
+places like plugins, audio module, CryScriptSystem, RenderDll (especially shaders),
+CryAnimation, CrySchematyc2, CrySystem, CryNetwork, Cry3DEngine, CryReflection,
+RC, etc.
+
+Actually you can also peak into relevant header files to get a glimpse of
+what utility functions it has to offer although that would take some times.
+So this post is here to reduce that time, and more to give awareness
+of their existence with a glance of what they could offer.
+
+> As I checked from our current development branch, it's 99.99% identical but I still want to base on source code users are able to access which is on Github, and that is v.5.6.x. In short, you can be sure these string utilitiy functions will be around for our next engine's major release. Anyway we didn't talk about other area of CE just yet.
+
+---
+
+# All as part of `namespace CryStringUtils`
+
+## Defined in `CryString/CryStringUtils.h`
+
+Name | Signature | Type | Description
+----------|--------------------|:-----:|------------------------------
+`cry_strcpy` ~`1`~ | `bool (char* const dst, size_t const dst_size_in_bytes, const char* const src)` | Inline | Copy string from source to destination. Result string is guaranteed to be null-terminated even in the case of clamping. Similar to `strcpy` but with different in signature that `cry_strcpy` accepts the size of destination string, and additional `const` for a pointer. It internally calls to `CryStringUtils_Internal::strcpy_with_clamp<char>()` with last argument supplied with `(size_t)-1`.
+`cry_strcpy` ~`2`~ | `bool (char* const dst, size_t const dst_size_in_bytes}, const char* const src, size_t const src_size_in_bytes)` | Inline | Same as ~`1`~ but also accepts a size of source string, thus it uses such size as last argument to `CryStringUtils_Internal::strcpy_with_clamp<char>()`.
+`cry_strcpy` ~`3`~ | `template<size_t SIZE_IN_CHARS>`</br> `bool (char (&dst)[SIZE_IN_CHARS], const char* const src)` | Inline Template | Same as ~`1`~ but instead accepts a destination string as a sized-array.
+`cry_strcpy` ~`4`~ | `template<size_t SIZE_IN_CHARS>`</br> `bool (char (&dst)[SIZE_IN_CHARS], const char* const src, size_t const src_size_in_bytes)`| Inline Template | Same as ~`3`~ but also accepts size of source string.
+`cry_fixed_size_strcpy` ~`5`~ | `template<size_t DST_SIZE_IN_CHARS, size_t SRC_SIZE_IN_CHARS>`</br> `bool cry_fixed_size_strcpy(char (&dst)[DST_SIZE_IN_CHARS], const char (&src)[SRC_SIZE_IN_CHARS])` | Inline Template | Work with sized-array string for both source and destination string.
+`cry_strcpy_wchar` ~`6`~ | `bool (wchar_t* const dst, size_t const dst_size_in_bytes, const wchar_t* const src)` | Inline | Work with wide-character type. It internally calls `CryStringUtils_Internal::strcpy_with_clamp<wchar_t>()` similarly to ~`1`~.
+`cry_strcpy_wchar` ~`7`~ | `bool (wchar_t* const dst, size_t const dst_size_in_bytes, const wchar_t* const src, size_t const src_size_in_bytes)` | Inline | Same as ~`6`~ but also accepts size of the source string.
+`cry_strcpy_wchar` ~`8`~ | `template<size_t SIZE_IN_WCHARS>`</br> `bool (wchar_t (&dst)[SIZE_IN_WCHARS], const wchar_t* const src)` | Inline Template | Same as ~`6`~ but instead accept a destination string as a sized-array.
+`cry_strcpy_wchar` ~`9`~ | `template<size_t SIZE_IN_WCHARS>`</br> `bool (wchar_t (&dst)[SIZE_IN_WCHARS], const wchar_t* const src, size_t const src_size_in_bytes)` | Inline Template | Same as ~`8`~ but also accepts size for a source string.
+</br>
+<center>**Table 1**: `cry_strcpy`</center>
+
+</br></br></br>
+
+Name | Signature | Type | Description
+----------|--------------------|:-----:|------------------------------
+`cry_strcat` ~`1`~ | `bool (char* const dst, size_t const dst_size_in_bytes, const char* const src)` | Inline | Append all characters from a null-terminated source string to a destination string with the given size. Result string is guaranteed to be null-terminated even in the case of clamping. Similar to `strcat` but with different in signature that `cry_strcat` accepts the size of destination string, and additional `const` for a pointer. It internally calls to `CryStringUtils_Internal::strcat_with_clamp<char>()` with last argument supplied with `(size_t)-1`.
+`cry_strcat` ~`2`~ | `bool (char* const dst, size_t const dst_size_in_bytes, const char* const src, size_t const src_size_in_bytes)` | Inline | Same as ~`1`~ but also accepts a size of source string, thus it uses such size as last argument to `CryStringUtils_Internal::strcat_with_clamp<char>()`.
+`cry_strcat` ~`3`~ | `template<size_t SIZE_IN_CHARS>`</br> `bool (char (&dst)[SIZE_IN_CHARS], const char* const src)` | Inline Template | Same as ~`1`~ but instead accept a destination string as a sized-array.
+`cry_strcat` ~`4`~ | `template<size_t SIZE_IN_CHARS>`</br> `bool (char (&dst)[SIZE_IN_CHARS], const char* const src, size_t const src_size_in_bytes)` | Inline Template | Same as ~`3`~ but also accepts size of source string.
+`cry_strcat_wchar` ~`5`~ | `bool (wchar_t* const dst, size_t const dst_size_in_bytes, const wchar_t* const src)` | Inline | Work with wide-character type. It internally calls `CryStringUtils_Internal::strcat_with_clamp<wchar_t>()` similarly to ~`1`~.
+`cry_strcat_wchar` ~`6`~ | `bool (wchar_t* const dst, size_t const dst_size_in_bytes, const wchar_t* const src, size_t const src_size_in_bytes)` | Inline | Same as ~`5`~ but also accepts size of the source string.
+`cry_strcat_wchar` ~`7`~ | `template<size_t SIZE_IN_WCHARS>`</br> `bool (wchar_t (&dst)[SIZE_IN_WCHARS], const wchar_t* const src)` | Inline Template | Same as ~`5`~ but instead accept a destination string as a sized-array.
+`cry_strcat_wchar` ~`8`~ | `template<size_t SIZE_IN_WCHARS>`</br> `bool (wchar_t (&dst)[SIZE_IN_WCHARS], const wchar_t* const src, size_t const src_size_in_bytes)` | Inline Template | Same as ~`7`~ but also accepts size for a source string.
+</br>
+<center>**Table 2**: `cry_strcat`</center>
+
+</br></br></br>
+
+Name | Signature | Type | Description
+----------|--------------------|:-----:|------------------------------
+`cry_sprintf` ~`1`~ | `bool (char* const dst, size_t const dst_size_in_bytes, const char* const format, ...)` | Inline | Create a formatted string similarly to `sprintf` but with different signature that `cry_sprintf` accepts the size of a destination string, and additional `const` for a pointer to ensure it won't be modified. It internally creates a `va_list` then calls to `CryStringUtils_Internal::vsprintf_with_clamp()`.
+`cry_sprintf` ~`2`~ | `template<size_t SIZE_IN_CHARS>`</br> `bool (char (&dst)[SIZE_IN_CHARS], const char* const format, ...)` | Inline Template | Same as ~`1`~ but instead accept a destination string as sized-array.
+`cry_vsprintf` ~`3`~ | `bool (char* const dst, size_t const dst_size_in_bytes, const char* const format, va_list args)` | Inline | Same as ~`1`~ but instead accept `va_list` directly.
+`cry_vsprintf` ~`4`~ | `template<size_t SIZE_IN_CHARS>`</br> `bool (char (&dst)[SIZE_IN_CHARS], const char* const format, va_list args)` | Inline Template | Same as ~`2`~ but instead accept `va_list` directly.
+</br>
+<center>**Table 3**: `cry_sprintf` and `cry_vsprintf`</center>
+
+</br></br></br>
+
+Name | Signature | Type | Description
+----------|--------------------|:-----:|------------------------------
+`cry_strcmp` ~`1`~ | `int (const char* string1, const char* string2)` | Inline | Compare two strings. It internally relies on `strcmp`.
+`cry_stricmp` ~`2`~ | `int (const char* string1, const char* string2)` | Inline | Same as ~`1`~ but compare in case-insensitive. It internally relies on `stricmp`.
+`cry_strncmp` ~`3`~ | `int (const char* string1, const char* string2, size_t count)` | Inline | Same as ~`1`~ but compare the first `count` bytes of both strings. It internally relies on `strncmp`.
+`cry_strncmp` ~`4`~ | `template<size_t STRING2_CHAR_COUNT>`</br> `int (const char* string1, const char(&string2)[STRING2_CHAR_COUNT])` | Inline Template | Same as ~`3`~ but instead accept another string as sized-array.
+</br>
+<center>**Table 4**: `strcmp`</center>
+
+</br></br></br>
+
+Name | Signature | Type | Description
+----------|--------------------|:-----:|------------------------------
+`cry_is_string_literal_impl` ~`1`~ | `bool (const char* szStr)` | Constexpr | Check if string is a literal string. It is `not` intended to be used directly, but through macro `CRY_IS_STRING_LITERAL`. It internally involves calling `cry_is_literal_impl_in_quotes`, and/or `cry_is_literal_impl_outside_quotes`.
+`isspace_constexpr` ~`2`~ | `bool (char chr)` | Constexpr | Check if input character is member of space characters i.e. `\t`, `\n`, `\r`, `\f`, and `\v`.
+`toLowerAscii` ~`3`~ | `char (char c)` | Inline | Convert an input character to lower case.
+`toUpperAscii` ~`4`~ | `char (char c)` | Inline | Convert an input character to upper case.
+</br>
+<center>**Table 5**: `Misc`</center>
+
+## Defined in `CryString/StringUtils.h`
+
+Name | Signature | Type | Description
+----------|--------------------|:-----:|------------------------------
+`toLower` ~`1`~ | `string (const string& str)` | Inline | Convert all ASCII characters to lower case. This is ASCII-only and locale agnostic. Non-ASCII characters are left unchanged. Internally depends on `NOT_USE_CRY_STRING`, if defined then it uses `std::transform` with `toLowerAscii` for its callback, otherwise it will use member function `MakeLower()` of `string` type in CE.
+`toUpper` ~`2`~ | `string (const string& str)` | Inline | Convert all ASCII characters to upper case. Same behavior internally as ~`1`~ while using `toUpperAscii` for its callback.
+`stristr` ~`3`~ | `const char* (const char* szString, const char* szSubstring)` | Inline | Work like `strstr` but in case-insensitive.
+`strnstr` ~`4`~ | `const char* (const char* szString, const char* szSubstring, int nSuperstringLength)` | Inline | Work the same as `strstr` but work up to `nSuperstringLength` characters in length.
+`toString` ~`5`~ | `string (unsigned nNumber)` | Inline | Convert the input type to string. Internally it uses `cry_sprintf()` to convert an input type to c-string then implicitly construct as `string` prior to a return.
+`toString` ~`6`~ | `string (signed int nNumber)` | Inline | Work similarly as ~`5`~.
+`toString` ~`7`~ | `string (float nNumber)` | Inline | Work similarly as ~`5`~.
+`toString` ~`8`~ | `string (bool nNumber)` | Inline | Work similarly as ~`5`~.
+`toString` ~`9`~ | `string (const Matrix44& m)` | Inline | Work similarly as ~`5`~.
+`toString` ~`10`~ | `string (const CryQuat& q)` | Inline | Work similarly as ~`5`~.
+`toString` ~`11`~ | `string (const Vec3& v)` | Inline | Work similarly as ~`5`~.
+`toLowerInplace` ~`12`~ | `void (string& str)` | Inline | Same as ~`1`~ but avoid memory allocation by doing it in-place.
+`toLowerInplace` ~`13`~ | `void (char* str)` | Inline | Same as ~`12`~ but accepts an input as c-string type.
+`IsValidFileName` ~`14`~ | `bool (const char* fileName)` | Inline | Check if input filename (without file extension) is valid. Support ASCII only.
+</br>
+<center>**Table 6**: `Regular`</center>
+
+</br></br></br>
+
+Name | Signature | Type | Description
+----------|--------------------|:-----:|------------------------------
+`MatchWildcard` ~`1`~ | `bool (const char* szString, const char* szWildcard)` | Inline | Lightweight regex-like match string function which supports only ? and \*. Ex. `CryStringUtils::MatchWildcard(inputPath, "*.png")`.
+`MatchWildcardIgnoreCase` ~`2`~ | `bool (const char* szString, const char* szWildcard)` | Inline | Same as ~`1`~ but works in case-insensitive.
+</br>
+<center>**Table 7**: `Wildcards`</center>
+
+</br></br></br>
+
+Name | Signature | Type | Description
+----------|--------------------|:-----:|------------------------------
+`WStrToUTF8` ~`1`~ | `void (const wchar_t* str, T& dstr)` | Inline | Convert a wide string (can be UTF-16 or UTF-32 depending on platform) to UTF-8. It is Unicode aware and locale agnostic. Internally it calls `Unicode::Convert`. Availability depends on definition of `NOT_USE_CRY_STRING` to not be defined.
+`WStrToUTF8` ~`2`~ | `string (const wchar_t* str)` | Inline | Same as ~`1`~ but returns converted result from function instead of assigning result value to input string pointer.
+`UTF8ToWStr` ~`3`~ | `void (const char* str, T& dstr)` | Inline | Convert an UTF-8 string to wide string (can be UTF-16 or UTF-32 depending on platform). It is Unicode aware and locale agnostic. Internally it calls `Unicode::Convert`. Availability depends on definition of `NOT_USE_CRY_STRING` to not be defined.
+`UTF8ToWStr` ~`4`~ | `wstring (const char* str)` | Inline | Same as ~`3`~ but returns converted result from function instead of assigning result value to input string pointer.
+`UTF8ToWStrSafe` ~`5`~ | `wstring (const char* szString)` | Inline | Same as ~`4`~ but does it in a safe way. Internally it uses recovery value `eErrorRecovery_FallbackWin1252ThenReplace` to fix encoding errors if detect invalid encoded sequence.
+`ANSIToUTF8` ~6~ | `string (const char* str)` | Inline | **Only** available on Windows. Convert a string from local Windows codepage (which is based on ANSI) to UTF-8. History about ANSI as used on Windows can be read [here](https://en.wikipedia.org/wiki/Windows_code_page).
+</br>
+<center>**Table 8**: `Unicode-related`</center>
+
+</br></br></br>
+
+Name | Signature | Type | Description
+----------|--------------------|:-----:|------------------------------
+`CalculateHash` ~`1`~ | `uint32 (const char* str)` | Inline | Just a wrapper call internally to `CCrc32::Compute`.
+`CalculateHashLowerCase` ~`2`~ | `uint32 (const char* str)` | Inline | Same as ~`1`~ but work in case-insensitive.
+`HashStringSeed` ~`3`~ | `uint32 (const char* string, const uint32 seed)` | Inline | Hash a string with seed. Recommended to use `CRY_DEFAULT_HASH_SEED`. Support Unicode, and locale agnostic.
+`HashStringLowerSeed` ~`4`~ | `uint32 (const char* string, const uint32 seed)` | Inline | Same as ~`3`~ but works only with ASCII, and it will convert to lower-case.
+`HashString` ~`5`~ | `uint32 (const char* string)` | Inline | Just a wrapper function call to ~`3`~, but uses `CRY_DEFAULT_HASH_SEED` as a seed.
+`HashStringLower` ~`6`~ | `uint32 (const char* string)` | Inline | Just a wrapper function call to ~`4`~, but uses `CRY_DEFAULT_HASH_SEED` as a seed.
+`portable_splitpath` ~`7`~ | `void (const char* path, char* drive, char* dir, char* fname, char* ext)` | Force Inline | Split input path into individual components. If there is no drive existing in the path, then ignore it.
+`portable_makepath` ~`8`~ | `void (char* path, const char* drive, const char* dir, const char* fname, const char* ext)` | Force Inline | Build a path from components.
+</br>
+<center>**Table 9**: `Misc`</center>
+\
+\
+`First published on July, 24, 2021`
