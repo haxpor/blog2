@@ -203,7 +203,7 @@ or accidentally exposed in the screenshot below :)
 Click for enlarged version.
 
 <center>
-[<img src="https://data.wasin.io/blog2/28/ccmake_exe-1.png" alt="result cmake with CE - options" width="50%" height="400px"/>](https://data.wasin.io/blog2/28/ccmake_exe-1.png)
+[<img src="https://data.wasin.io/blog2/28/ccmake_exe-1.png" alt="result cmake with CE - options" width="50%"/>](https://data.wasin.io/blog2/28/ccmake_exe-1.png)
 </center>
 <center>
 **Figure 1**: Toggling CMake options
@@ -212,7 +212,7 @@ Click for enlarged version.
 <br/>
 
 <center>
-[<img src="https://data.wasin.io/blog2/28/ccmake_exe-2.png" alt="result cmake with CE - configuring" width="50%" height="400px"/>](https://data.wasin.io/blog2/28/ccmake_exe-2.png)
+[<img src="https://data.wasin.io/blog2/28/ccmake_exe-2.png" alt="result cmake with CE - configuring" width="50%"/>](https://data.wasin.io/blog2/28/ccmake_exe-2.png)
 <center>
 <center>
 **Figure 2**: Configuring CMake project
