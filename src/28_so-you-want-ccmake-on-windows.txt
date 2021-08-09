@@ -65,7 +65,7 @@ the same as if users do it directly on command prompt or Power Shell.
 I'm satisfied with result of this approach, and most likely to call it a day. But
 another thought also came up that I should also do a native compilation with MSVC
 for both CMake and PDCurses. If succeed, then we **might** be able to remove a
-thin abstraction that it got introduced due to cross-compilation. That thought
+thin abstraction that it got introduced due to cross-compilation (if ever any). That thought
 became the next approach...
 
 ## 3. Natively compile both CMake and PDCurses with MSVC. <sub><small><font color="green">Work</font>, <font color="red">But much slower</font></small></sub>
@@ -101,8 +101,11 @@ we want to do here. So the guideline you will be seeing next bases on that.
 
 # How to build `ccmake.exe`
 
-So now as we chosen approach 2 to tackle the problem.
+So now as we chose approach 2 to tackle the problem.
 The guide listed in this section is to "*Cross-compile both CMake and PDCurses with mingw64 for Windows on Linux*".
+
+I tested this on Windows 10 machine installed with WSL 1 of Ubuntu 20.04. It shoud work
+fine even cross-compiled on a native Linux.
 
 > We will base on CMake's release tag `v3.20.5` as I tested, it's the highest as possible that is easy enough to do cross-compilation with mingw64. As of this writing, the latest version is `v3.21.1`.
 
@@ -112,7 +115,7 @@ The guide listed in this section is to "*Cross-compile both CMake and PDCurses w
 * `cmake` - install by downloading Windows version of v3.20.5 (download [here](https://cmake.org/download/))
 * Upstream [CMake](https://github.com/Kitware/CMake) source code (via git) - we will use `v3.20.5`
 * Upstream [PDCurses](https://github.com/wmcbrine/PDCurses) source (via git) - we will use `3.9`
-* [mingw-std-threads](https://github.com/meganz/mingw-std-threads) (via git) - mingw64 alone still misses thread header library, this will patch that part
+* [mingw-std-threads](https://github.com/meganz/mingw-std-threads) (via git) - mingw64 alone still misses thread/concurrency library headers, this will patch that part
 * CMake toolchain for cross-compilation with mingw64 via CMake - download [here](https://gist.github.com/ebraminio/2e32c8f6d032a8e01606f7f564d2b1ee)
 * My CMake and PDCurses patch [here](https://gist.github.com/haxpor/aec887281e37b9d8a8448fcfa52ae13f)
 
@@ -140,8 +143,8 @@ to do git clone, or save pre-requisite resource anywhere in your local machine, 
 
 or
 
-Put git repository outside of system _include_ directory, then copy all headers
-file there to where mingw64 will search for header files
+Put git repository outside of system _include_ directory, then manually copy all
+header files afterwards...
 
 * `git clone git@github.com:meganz/mingw-std-threads.git`
 * `sudo mkdir /usr/x86_64-w64-mingw32/include/mingw-std-threads`
@@ -174,10 +177,10 @@ path where you saved the resource on your local machine.
 4. `ninja -C _build` or `ninja -C _build ccmake.exe`  
 The latter will build faster as it attempt to build only what needed by `ccmake.exe`
 5. `cp -av <PDCurses-src-dir>/wincon/pdcurses.dll /mnt/c/Program\ Files/CMake/bin/`  
-Assume you installed CMake on Windows at drive C at that path which is by default
+Assume you installed CMake on Windows at drive C which is by default
 6. `cp -av <CMake-src-dir>/_build/bin/ccmake.exe /mnt/c/Program\ Files/CMake/bin/`
 7. `cp -av /usr/lib/gcc/x86_64-w64-mingw32/9.3-posix/*.dll /mnt/c/Program\ Files/CMake/bin/`  
-Depends on which gcc version is prioritized to be used on your machine, so take note of `9.3-posix` that it might be different. This one usually is optional as we cross-compile against core mingw64 libraries statically. But we still copy its corresponding `.dll` there living along side the executable binary for safety. Although as checked via `dumpbin.exe /dependents ccmake.exe`, it doesn't mention anything regarding to mingw64's core libraries.
+Depends on which gcc version is prioritized to be used on your machine, so take note of `9.3-posix` that it might be different. This one usually is optional as we link statically against core mingw64 libraries. But we still copy its corresponding `.dll` there living along side the executable binary for safety. Although as checked via `dumpbin.exe /dependents ccmake.exe`, it doesn't mention anything regarding to mingw64's core libraries.
 8. `/mnt/c/Program\ Files/CMake/bin/ccmake.exe --help`  
 You should see no errors. Bunch of help texts should show up.
 9. `/mnt/c/Program\ Files/CMake/bin/ccmake.exe -S "C:\Path\To\Proj\SourceDir" -B "C:\Path\To\Proj\BuildDir"`  
