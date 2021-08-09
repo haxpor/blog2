@@ -33,7 +33,7 @@ Here is the chronological order of attempts I've made so you will get my thought
 
 First attempt was made with assumption that ncurses would work even via cross-compilation to be run on Windows.
 With a small changes to make CMake compatible and buildable with mingw64, then I was
-able to cross-compile succesffully.
+able to cross-compile successfully.
 
 I chose to use a pre-built mingw64 version of ncurses due to a lot of pain need to endure
 to make it compilable with mingw64. Ncurses developers already did this work, so
@@ -43,9 +43,9 @@ Result is that I was able to launch it, toggle CMake options here and there, but
 didn't work at all. It got stuck. Although I tried to debug, but didn't fully
 commit to go much further.
 
-> Interested users who want to test it out themselves can take my patch for compiling both CMake, and PDCurses with mingw64 [here](https://gist.github.com/haxpor/aec887281e37b9d8a8448fcfa52ae13f).
+> Interested users who want to test it out themselves can take my patch for compiling CMake with mingw64 [here](https://gist.github.com/haxpor/8d9b7867503f41b3efc592ac6efdaff8).
 
-Next I started to seek for alternative implementation of curses/ncurses but on
+Next I started seeking for alternative implementation of curses/ncurses but on
 Windows. I came across [PDCurses](https://github.com/wmcbrine/PDCurses). I was
 slightly worry that it might not be fully compatible, nor provide all the symbols
 that would be needed by CMake when we compile the source. But I made an attempt
