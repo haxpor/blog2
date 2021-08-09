@@ -206,7 +206,7 @@ Click for enlarged version.
 [<img src="https://data.wasin.io/blog2/28/ccmake_exe-1.png" alt="result cmake with CE - options" width="50%" height="400px"/>](https://data.wasin.io/blog2/28/ccmake_exe-1.png)
 </center>
 <center>
-Figure 1: Toggling CMake options
+**Figure 1**: Toggling CMake options
 </center>
 
 <br/>
@@ -215,7 +215,7 @@ Figure 1: Toggling CMake options
 [<img src="https://data.wasin.io/blog2/28/ccmake_exe-2.png" alt="result cmake with CE - configuring" width="50%" height="400px"/>](https://data.wasin.io/blog2/28/ccmake_exe-2.png)
 <center>
 <center>
-Figure 2: Configuring CMake project
+**Figure 2**: Configuring CMake project
 </center>
 \
 \
