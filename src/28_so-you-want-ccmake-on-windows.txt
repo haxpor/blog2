@@ -189,7 +189,7 @@ in your `~/.bash_aliases`.
 
 # Result
 
-I'm testing this aginst CryEngine internal development branch. Both of images
+I'm testing this against CryEngine internal development branch. Both of images
 below result from execution through WSL on Windows machine. For someone that
 doesn't have time, I created an archive of pre-built `ccmake.exe` from above
 workflow [ccmake_mingw64_pdcurses_dist.tar.gz](https://data.wasin.io/blog2/28/ccmake_exe-1.pn://data.wasin.io/blog2/28/ccmake_mingw64_pdcurses_dist.tar.gz).
@@ -212,7 +212,7 @@ Figure 1: Toggling CMake options
 [<img src="https://data.wasin.io/blog2/28/ccmake_exe-2.png" alt="result cmake with CE - configuring" width="50%" height="400px"/>](https://data.wasin.io/blog2/28/ccmake_exe-2.png)
 <center>
 <center>
-Figure 2: Configuring in-progress in CMake
+Figure 2: Configuring CMake project
 </center>
 \
 \
