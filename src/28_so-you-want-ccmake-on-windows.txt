@@ -1,0 +1,219 @@
+So you want ccmake on Windows?
+=========================================================
+
+Let's think about this scenario.  
+You work on CMake Windows-based project on Windows machine through WSL.
+
+Although on Windows, you can already use `cmake-gui.exe`. But you prefer to use
+command line based solution to configure or generate the project, or quickly
+adjust options from previously generated CMake project without a need to incrementally execute
+`cmake.exe` with bunch of options and lots of flags here and there every now and then.
+`ccmake` is the solution here which is available only on Unix/Linux based platform.
+
+> `ccmake` is literally `cmake-gui.exe` but a command line incarnation.
+
+The core question is how can we make `ccmake` also available on Windows ?
+
+# Problem
+
+To bring `ccmake` from Unix/Linux platform onto Windows. It's not that straight
+forward or a painless process. `ccmake` is configured in upstream CMake source code
+to be [checked and built only if it's Unix/Linux platform](https://github.com/Kitware/CMake/blob/v3.20.5/CMakeLists.txt#L660-L667).
+
+Not just that `ccmake` depends on curses or ncurses library. That dependency is
+available on Unix/Linux platform only as terminal on Windows does not based on the
+concept of [terminfo/termcap](https://tldp.org/HOWTO/Text-Terminal-HOWTO-16.html).
+
+# Solutions
+
+I did initial research and jump right into action.
+Here is the chronological order of attempts I've made so you will get my thought process.
+
+## 1. Cross-compile [CMake](https://github.com/Kitware/CMake) with [mingw64](http://mingw-w64.org/doku.php) for Windows on Linux + pre-built mingw64 version of [ncurses](https://invisible-island.net/ncurses/) (mirror on [github](https://github.com/mirror/ncurses)) <sub><small><font color="red">Broken</font></small></sub>
+
+First attempt was made with assumption that ncurses would work even via cross-compilation to be run on Windows.
+With a small changes to make CMake compatible and buildable with mingw64, then I was
+able to cross-compile succesffully.
+
+I chose to use a pre-built mingw64 version of ncurses due to a lot of pain need to endure
+to make it compilable with mingw64. Ncurses developers already did this work, so
+we can trust that the output libraries are in the best form as it can be.
+
+Result is that I was able to launch it, toggle CMake options here and there, but configuring and generation a project
+didn't work at all. It got stuck. Although I tried to debug, but didn't fully
+commit to go much further.
+
+> Interested users who want to test it out themselves can take my patch for compiling both CMake, and PDCurses with mingw64 [here](https://gist.github.com/haxpor/aec887281e37b9d8a8448fcfa52ae13f).
+
+Next I started to seek for alternative implementation of curses/ncurses but on
+Windows. I came across [PDCurses](https://github.com/wmcbrine/PDCurses). I was
+slightly worry that it might not be fully compatible, nor provide all the symbols
+that would be needed by CMake when we compile the source. But I made an attempt
+anyway, so it became next approach...
+
+## 2. Cross-compile both CMake and PDcurses with mingw64 for Windows on Linux. <sub><small><font color="green">Recommended</font></small></sub>
+
+Result is great! I feel like it's a drop-in replacement for ncurses. I was able
+to launch, select & toggle CMake options here and there, then configure and generate
+a project.
+
+Although with some effort to patch PDCurses by tweaking its arrow key codes
+to make it detectable through WSL, and make its `Makefile` build system able to
+do cross-compilation with mingw64. So navigating through options would work
+the same as if users do it directly on command prompt or Power Shell.
+
+I'm satisfied with result of this approach, and most likely to call it a day. But
+another thought also came up that I should also do a native compilation with MSVC
+for both CMake and PDCurses. If succeed, then we **might** be able to remove a
+thin abstraction that it got introduced due to cross-compilation. That thought
+became the next approach...
+
+## 3. Natively compile both CMake and PDCurses with MSVC. <sub><small><font color="green">Work</font>, <font color="red">But much slower</font></small></sub>
+
+It's totally painless to build. One thing to note is to build it as static library
+in order to make it compatible and ease in linking with CMake later.
+
+This means there is no need to specify `DLL=Y`. Thus the build command would be
+
+```
+cmd.exe /c nmake -f Makefile.vc 
+```
+
+Check [README.md](https://github.com/wmcbrine/PDCurses/blob/3.9/wincon/README.md) for
+more detail. But sadly, its performance is much slower than mingw64 version in
+approach 2 especially it takes longer time in configuring, and generating project significantly.
+Other than that, they both work fine the same. So it's clear for me which one to choose.
+
+To reassure slightly more, check [README.rst](https://github.com/Kitware/CMake/blob/v3.20.5/README.rst#windows)
+in which it mentions about using mingw as one of a couple ways to build. They wouldn't
+list it there if there's something really broken with cross-compilation process.
+
+> Interested users who want to test it out themselves can take my patch for compiling both CMake, and PDCurses with MSVC [here](https://gist.github.com/haxpor/cd019b88e3c1cf407ef26718823078ca).
+
+At last I'm going with mingw64 version.
+
+## Chosen Approach
+
+Approach 2 is the best, and recommended way to proceed with what
+we want to do here. So the guideline you will be seeing next bases on that.
+
+<br/><br/>
+
+# How to build `ccmake.exe`
+
+So now as we chosen approach 2 to tackle the problem.
+The guide listed in this section is to "*Cross-compile both CMake and PDCurses with mingw64 for Windows on Linux*".
+
+> We will base on CMake's release tag `v3.20.5` as I tested, it's the highest as possible that is easy enough to do cross-compilation with mingw64. As of this writing, the latest version is `v3.21.1`.
+
+## Pre-requisite
+
+* `mingw64` - install via package manager on Linux (for Debian/Ubuntu, use `sudo apt install mingw-w64`)
+* `cmake` - install by downloading Windows version of v3.20.5 (download [here](https://cmake.org/download/))
+* Upstream [CMake](https://github.com/Kitware/CMake) source code (via git) - we will use `v3.20.5`
+* Upstream [PDCurses](https://github.com/wmcbrine/PDCurses) source (via git) - we will use `3.9`
+* [mingw-std-threads](https://github.com/meganz/mingw-std-threads) (via git) - mingw64 alone still misses thread header library, this will patch that part
+* CMake toolchain for cross-compilation with mingw64 via CMake - download [here](https://gist.github.com/ebraminio/2e32c8f6d032a8e01606f7f564d2b1ee)
+* My CMake and PDCurses patch [here](https://gist.github.com/haxpor/aec887281e37b9d8a8448fcfa52ae13f)
+
+Next,...  
+The actual steps are separated into 2 phases
+
+1. Preparation phase - prepare each individual dependency
+2. Finalize phase - assemble altogether
+
+## 1. Preparation phase
+
+Notice each of `<...>` is where you substitute your own directory as you have freedom
+to do git clone, or save pre-requisite resource anywhere in your local machine, otherwise noted.
+
+### Prepare CMake
+
+* `git clone git@github.com:Kitware/CMake.git`
+* `git checkout v3.20.5`
+* `git apply <dir-to-my-patch>/cmake_v3.20.5_pdcurses.patch`
+
+### Prepare mingw-std-threads
+
+* `cd /usr/x86_64-w64-mingw32/include` - this is _include_ directory by default that mingw64 toolchain will search for
+* `sudo git clone git@github.com:meganz/mingw-std-threads.git`
+
+or
+
+Put git repository outside of system _include_ directory, then copy all headers
+file there to where mingw64 will search for header files
+
+* `git clone git@github.com:meganz/mingw-std-threads.git`
+* `sudo mkdir /usr/x86_64-w64-mingw32/include/mingw-std-threads`
+* `cp -av <mingw-std-threads-dir>/*.h /usr/x86_64-w64-mingw32/include/mingw-std-threads/`
+
+### Prepare PDCurses
+
+* `git clone git@github.com:wmcbrine/PDCurses.git`
+* `git checkout 3.9`
+* `git apply <dir-to-my-patch>/pdcurses_mingw64.patch`
+* `cd wincon`
+* `make DLL=Y` (`DLL=Y` tells to build as shared library)
+* `cp -av pdcurses.a pdcurses.dll /usr/x86_64-w64-mingw32/lib/`
+* `cd ..`
+* `cp -av curses.h curspriv.h panel.h /usr/x86_64-w64-mingw32/include/`
+
+### Prepare CMake toolchain file for building with mingw64
+
+* Download toolchain file from [here](https://gist.github.com/ebraminio/2e32c8f6d032a8e01606f7f564d2b1ee) then save to your home directory - thanks to ebraminio, and (originally) peterspackman
+
+
+## 2. Finalize phase
+
+Again, substitute any `<...>` to what you actually have e.g. cloned repository,
+path where you saved the resource on your local machine.
+
+1. `cd <CMake-src-dir>`
+2. `cmake -DCMAKE_TOOLCHAIN_FILE=~/mingw-w64-x86_64.cmake -G Ninja -B _build -S .`
+3. You should notice the line saying `-- Found Curses: ...` at the near end of output lines. It means it actually found our PDCurses.
+4. `ninja -C _build` or `ninja -C _build ccmake.exe`  
+The latter will build faster as it attempt to build only what needed by `ccmake.exe`
+5. `cp -av <PDCurses-src-dir>/wincon/pdcurses.dll /mnt/c/Program\ Files/CMake/bin/`  
+Assume you installed CMake on Windows at drive C at that path which is by default
+6. `cp -av <CMake-src-dir>/_build/bin/ccmake.exe /mnt/c/Program\ Files/CMake/bin/`
+7. `cp -av /usr/lib/gcc/x86_64-w64-mingw32/9.3-posix/*.dll /mnt/c/Program\ Files/CMake/bin/`  
+Depends on which gcc version is prioritized to be used on your machine, so take note of `9.3-posix` that it might be different. This one usually is optional as we cross-compile against core mingw64 libraries statically. But we still copy its corresponding `.dll` there living along side the executable binary for safety. Although as checked via `dumpbin.exe /dependents ccmake.exe`, it doesn't mention anything regarding to mingw64's core libraries.
+8. `/mnt/c/Program\ Files/CMake/bin/ccmake.exe --help`  
+You should see no errors. Bunch of help texts should show up.
+9. `/mnt/c/Program\ Files/CMake/bin/ccmake.exe -S "C:\Path\To\Proj\SourceDir" -B "C:\Path\To\Proj\BuildDir"`  
+Test & validate configuring and generation of project.
+10. Done
+
+**Bonus**: You are free to `alias` resultant binary to shorten your keystrokes e.g. `alias cmake.exe=/mnt/c/Program\ Files/CMake/bin/ccmake.exe`
+in your `~/.bash_aliases`.
+
+# Result
+
+I'm testing this aginst CryEngine internal development branch. Both of images
+below result from execution through WSL on Windows machine. For someone that
+doesn't have time, I created an archive of pre-built `ccmake.exe` from above
+workflow [ccmake_mingw64_pdcurses_dist.tar.gz](https://data.wasin.io/blog2/28/ccmake_exe-1.pn://data.wasin.io/blog2/28/ccmake_mingw64_pdcurses_dist.tar.gz).
+
+Nothing secret
+or accidentally exposed in the screenshot below :)
+
+Click for enlarged version.
+
+<center>
+[<img src="https://data.wasin.io/blog2/28/ccmake_exe-1.png" alt="result cmake with CE - options" width="50%" height="400px"/>](https://data.wasin.io/blog2/28/ccmake_exe-1.png)
+</center>
+<center>
+Figure 1: Toggling CMake options
+</center>
+
+<br/>
+
+<center>
+[<img src="https://data.wasin.io/blog2/28/ccmake_exe-2.png" alt="result cmake with CE - configuring" width="50%" height="400px"/>](https://data.wasin.io/blog2/28/ccmake_exe-2.png)
+<center>
+<center>
+Figure 2: Configuring in-progress in CMake
+</center>
+\
+\
+`First published on August, 9, 2021`
