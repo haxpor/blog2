@@ -32,9 +32,9 @@ Git 3-way linear diff format (need `git config --global merge.conflictstyle diff
 ```
 Perforce 3-way linear diff format (by default)
 
-But in a more complicated case, it is not
-convenient enough to just take a look at a linear 3-way diff format above.
-It'd be so helpful to see content in **base**, **your** and **their** version.
+But in a more complicated case, it is not enough to just take a look only at 
+a linear 3-way diff format above.
+It'd be so helpful to see content in **base**, **yours** and **theirs** version.
 With the help of colorizing diff between each version, this would reduce time
 and reduce number of *guesses* from the one who would be merging.
 
@@ -45,14 +45,14 @@ Take a look at the scenario below
 Imagine if changes from `A` to `(B, C)` deviates itself very far if compared
 to changes from `A` to `D`. Then to-be-merge-result of `E` would require much of effort.
 Sometimes automatic merge mechanism results in a mess state that is totally hard to guess which
-chunk either from base, your or their version should be picked?? You know, sometimes
+chunk either from _base_, _yours_ or _theirs_ version should be picked?? You know, sometimes
 chunk of codes just cut, and inserted out of nowhere. This is result from too deviated
 away, and much of work has been done around the same lines of code in two different
 branches. More full-fledge 3-way merge is needed in this case.
 
 If you use GUI merge tool, and you probably are happy with it. Then the information
 listing here might not be too attractive to you. But if you're command line-based
-users with minimal mouse interaction, and GUI. Please read on.
+users. Please read on.
 
 A guide below is to set up your merge tool to use `vimdiff` with git, and
 perforce (`p4.exe`/`p4` binaries). Note that we are not going to talk about how to use it here,
