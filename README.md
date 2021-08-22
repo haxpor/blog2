@@ -34,3 +34,4 @@ for this blog.
 | 26 | C++ | [Clearing flush() Dilemma Usage in iostream](https://wasin.io/blog/26_cpp-clearing-flush-dilemma-usage-in-iostream.html) |
 | 27 | C++, CryEngine | [CryEngine Internals Series #2 - String Utilities](https://wasin.io/blog/27_ce-interns-2-string-funtionality-part2.html) |
 | 28 | CMake, Cross-compilation | [So you want ccmake on Windows?](https://wasin.io/blog/28_so-you-want-ccmake-on-windows.html) |
+| 29 | tools, git, perforce, vimdiff | [How to set up 3-way merge in p4 and perforce](https://wasin.io/blog/29_how-to-set-up-3-way-merge-in-p4-and-git-with-vimdiff.html) |
