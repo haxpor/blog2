@@ -70,7 +70,7 @@ but just setup.
 * `git config --global mergetool.gitmergetool.cmd "gitmergetool \"\$BASE\" \"\$REMOTE\" \"\$LOCAL\" \"\$MERGED\""`  
 
   Escape `$` in order to not let terminal interpret it as environment variable (if executed on Unix/Linux based terminal).
-  This will set our customized mergetool namely `gitmergetool` to execute the command as set.
+  This will set our customized merge tool namely `gitmergetool` to execute the command as set.
 
 * `sudo touch /usr/local/bin/gitmergetool`
 * Add the following content into such file via your favourite text editor
@@ -114,7 +114,7 @@ Then you can execute `git mergetool`. It will show like in the following screen
 
 # Perforce
 
-Nowsdays you can use `p4.exe`/`p4` through WSL to work with both Windows-based,
+Nowadays you can use `p4.exe`/`p4` through WSL to work with both Windows-based,
 and Linux-based project. The guide listed in this section is based on WSL.
 
 > As you are aware, `p4` binary needs to understand platform specific path. It
