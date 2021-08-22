@@ -1,0 +1,192 @@
+How to set up 3-way merge for p4 and git with vimdiff
+=========================================================
+
+Encountering a situation to resolve a merge conflict that is harder than usual
+as well as taking longer time won't come in very often. Most of merge conflicts
+I have resolved can be easily done by looking at a linear 3-way diff view alone
+without a need to look at each separate content of each file.
+
+A linear 3-way diff (that I'd like to say) is as follows
+
+```
+<<<<<<< HEAD
+(text from your version)
+||||||| cab9282
+(text from original version)
+=======
+(text from their version)
+>>>>>>> feature_branch
+```
+Git 3-way linear diff format (need `git config --global merge.conflictstyle diff3`).
+`cab9282` is just an example of SHA1 for git hash.
+
+
+```
+>>>> ORIGINAL file#n
+(text from original version)
+==== THIERS file#m
+(text from their version)
+==== YOURS file#m
+(text from your version)
+<<<<
+```
+Perforce 3-way linear diff format (by default)
+
+But in a more complicated case, it is not
+convenient enough to just take a look at a linear 3-way diff format above.
+It'd be so helpful to see content in **base**, **your** and **their** version.
+With the help of colorizing diff between each version, this would reduce time
+and reduce number of *guesses* from the one who would be merging.
+
+Take a look at the scenario below
+
+![](https://data.wasin.io/blog2/29/commit-tree.svg)
+
+Imagine if changes from `A` to `(B, C)` deviates itself very far if compared
+to changes from `A` to `D`. Then to-be-merge-result of `E` would require much of effort.
+Sometimes automatic merge mechanism results in a mess state that is totally hard to guess which
+chunk either from base, your or their version should be picked?? You know, sometimes
+chunk of codes just cut, and inserted out of nowhere. This is result from too deviated
+away, and much of work has been done around the same lines of code in two different
+branches. More full-fledge 3-way merge is needed in this case.
+
+If you use GUI merge tool, and you probably are happy with it. Then the information
+listing here might not be too attractive to you. But if you're command line-based
+users with minimal mouse interaction, and GUI. Please read on.
+
+A guide below is to set up your merge tool to use `vimdiff` with git, and
+perforce (`p4.exe`/`p4` binaries). Note that we are not going to talk about how to use it here,
+but just setup.
+
+# Git
+
+* `git config --global merge.conflictstyle diff3`  
+
+  Git doesn't use `diff3` format by default. So when there is a merge conflict, conflict chunks
+  will only show in diff2 format; which might not be enough. This command will
+  set to show in diff3 style.
+
+* `git config --global merge.tool gitmergetool`
+* `git config --global mergetool.gitmergetool.cmd "gitmergetool \"\$BASE\" \"\$REMOTE\" \"\$LOCAL\" \"\$MERGED\""`  
+
+  Escape `$` in order to not let terminal interpret it as environment variable (if executed on Unix/Linux based terminal).
+  This will set our customized mergetool namely `gitmergetool` to execute the command as set.
+
+* `sudo touch /usr/local/bin/gitmergetool`
+* Add the following content into such file via your favourite text editor
+
+  ```
+  #!/bin/bash
+  # script to accept arguments sending in from git mergetool
+  #
+  # Base is $1
+  # Remote (or Theirs) is $2
+  # Local (or Yours) is $3
+  # Merged is $4
+  vimdiff -c "wincmd J" -c "windo set wrap" "$4" "$3" "$1" "$2"
+  ```
+
+  According to [git mergetool - Options](https://git-scm.com/docs/git-mergetool#_options),
+  git will send in arguments in order of `$BASE`, `$LOCAL`, `$REMOTE`, and `$MERGED` respectively
+  in which we pass in from our `mergetool.gitmergetool.cmd` accordingly. Then inside
+  our shell/bash script, some rearrangement is done. This is to arrange our
+  window layout (`wincmd J` to place the first window downward). In additional to
+  enable word wrap for all window (disabled by default for vim's diffmode).
+
+* `sudo chmod +x /usr/local/bin/gitmergetool`  
+
+  To make sure our script is executable.
+
+We are done here. When you attempt to merge, and result in merge conflict. It
+usually displays the following lines
+
+```
+Auto-merging file1.txt
+CONFLICT (content): Merge conflict in file1.txt
+Automatic merge failed; fix conflicts and then commit the result.
+```
+
+Then you can execute `git mergetool`. It will show like in the following screen
+
+<center>
+[<img src="https://data.wasin.io/blog2/29/git-mergetool.png" alt="git mergetool - 3way merge" width="85%"/>](https://data.wasin.io/blog2/29/git-mergetool.png)
+</center>
+
+# Perforce
+
+Nowsdays you can use `p4.exe`/`p4` through WSL to work with both Windows-based,
+and Linux-based project. The guide listed in this section is based on WSL.
+
+> As you are aware, `p4` binary needs to understand platform specific path. It
+has issue like [this](https://stackoverflow.com/questions/63178634/p4-unshelve-results-in-rename-permission-denied) if try
+to use WSL-based `p4` binary to work with Windows-based project. Anyway, WSL makes
+it easy to work across Windows/Linux platform now. So we can use `p4.exe` or switch
+to use `p4` when need easily. Better utilize it unless it is
+fully Linux-only platform.
+
+## Windows-base p4
+
+* `p4 set P4MERGE="bash /usr/local/bin/p4merge_windowspath"`  
+
+  This is a Windows specific way to set environment variable via registry for
+  merge program to be used. Here we specify shell/bash script to intercept the
+  arguments as same as we did for git.
+
+* `sudo touch /usr/local/bin/p4merge_windowspath`
+* Add the following content into such file via your favourite text editor  
+
+  ```
+  #!/bin/bash
+  # this is to allow us to convert input Windows path to Linux path as sent in by
+  # perforce.
+  # Perforce sends arguments in order of base, theirs, yours, and resulting merge file.
+  #
+  # Base is $1
+  # Theirs is $2
+  # Yours is #3
+  # Merged is #4
+  vimdiff -c "wincmd J" -c "windo set wrap" `wslpath $4` `wslpath $3` `wslpath $1` `wslpath $2`
+  ```
+
+  The order of arguments sending in from `p4 resolve` stated [here](https://www.perforce.com/manuals/v19.1/cmdref/Content/CmdRef/P4MERGE.html)
+  which are base, theirs, yours, and merged file. As similar as we had with git,
+  we set up window layout accordingly.
+
+  Notice that we use `wslpath <path>` to convert from Windows-based path into
+  Linux-based path as `vimdiff` we are using here is Linux-based through WSL.
+
+* `sudo chmod +x /usr/local/bin/p4merge_windowspath`
+
+We are done.
+After attempt to do `p4 resolve`, and have merge conflicts. It will prompt
+you what to do in which it will provide you with a chance to do merge per file
+i.e. `m` key.
+
+It will execute merge tool as we set up above. It shows the same screen output as
+can be seen in git section. But the linear diff format is different.
+
+## Linux-based p4
+
+* Add `export P4MERGE="bash /usr/local/bin/p4merge_linuxpath"` into your `~/.bash_aliases`.
+* `source ~/.bash_aliases`
+* `sudo touch /usr/local/bin/p4merge_linuxpath`
+* Add the same content of `/usr/local/bin/p4merge_windowspath` as seen in _Windows-based p4_ section above into `/usr/local/bin/p4merge_linuxpath` but the last line should be  
+
+  ```
+  vimdiff -c "wincmd J" -c "windo set wrap" $4 $3 $1 $2
+  ```
+
+  As you can see, no need for `wslpath` as the path is already in Linux-based path.
+
+* `sudo chmod +x /usr/local/bin/p4merge_linuxpath`
+
+# Closing
+
+To fasten your process, you can use my repository [haxpor/mergeconflict_repo](https://github.com/haxpor/mergeconflict_repo)
+which can trigger merge conflict right after merging from `feature` branch
+into `master`. My apology, I don't have any perforce setup for you to test
+as it's different beast for server to setup. Anyway with that repository, it's
+enough to validate your `vimdiff` setup.
+\
+\
+`First published on August, 22, 2021`
