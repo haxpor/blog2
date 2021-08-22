@@ -1,4 +1,4 @@
-How to set up 3-way merge for p4 and git with vimdiff
+How to set up 3-way merge for git and p4 with vimdiff
 =========================================================
 
 Encountering a situation to resolve a merge conflict that is harder than usual
