@@ -1,0 +1,322 @@
+Linux Kernel #1 - Kernel Module init and exit function pointer
+=========================================================
+
+The very first action in getting into linux kernel is to somehow writing a simple
+kernel module. But something caught my attention as instead of fully commit to
+just do just that; writing a simple kernel module; I was digging deeper to find
+side-tracked answers as to 
+
+1. **How `init` and `exit` function pointers of `struct module` in `include/linux/module.h`
+    get initialized ?**
+2. **Their relationship to `init_module`, and `cleanup_module` ?**
+
+If we `grep` the source code looking for `init` or `exit` and how they relate to
+`init_module` and `cleanup_module`, it would be quite an effort for very first timer
+linux kernel dwellers. It has been 21 days since I've posted this very similar
+question on [reddit](https://www.reddit.com/r/kernel/comments/p4b3yt/where_does_it_call_init_module_cleanup_module_in/)
+and I recently found the answer myself. This writeup will help answering the same
+to you in case you're in curiosity the same as me.
+
+# Starting point
+
+In practice, most tutorials or documentations out there will tell us that
+we can have the following two functions defined in our kernel module
+
+* `init_module` - for initialization
+* `cleanup_module` - for cleanup sequence
+
+They will be used and called automatically when user installs (`insmod`) or removes (`rmmod`) the module.
+As simple as it gets from the perspective of users, we just define and use them.
+But digging deeper, it's quite a setup for linux kernel itself having done
+a leg-work for us.
+
+To find initial questions we have, let's start connecting the dots by looking at
+the relevant piece of information we're of interest in which is `struct module` as follows.
+
+```c
+struct module {
+	...
+	/* Startup function. */
+	int (*init)(void);
+	...
+	/* Destruction function. */
+	void (*exit)(void);
+	...
+};
+```
+
+Clearly kernel code would be calling those function pointers at some points
+as we can see from `kernel/module.c`
+
+* `init` - in `do_init_module(struct module *mod)` function as the following excerpts
+
+    ```c
+    ...
+    /*Start the module */
+    if (mod->init != NULL)
+	    ret = do_one_initcall(mod->init);
+    ...
+    ```
+* `exit` - in `SYSCALL_DEFINE2(delete_module, const char __user *, name_user, unsigned int, flags)`
+function which is eventually preprocessed into `sys_delete_module(...)`
+
+    ```c
+    /* Final destruction now no one is using it. */
+    if (mod->exit != NULL)
+        mod->exit();
+    ```
+
+Build up on this, we can begin seeking for answers.
+
+# Seeking the answers...
+
+Linux kernel has a post-processing step for a newly created kernel module. This
+additional step will inspect successfully built object file of such kernel module.
+It involves ELF file format processing, reading in sections, symbol names, version,
+license, etc. This topic of ELF format is quite large, and deserves its own separate
+post.
+
+This post-processing step generates new code which will **initialize** those
+`init` and `exit` with literally function name of `init_module` and `cleanup_module`
+if it has been found as existing after compiling kernel module in question.
+
+The magic happens inside `add_header(struct buffer *b, struct module *mod)`
+of `scripts/mod/modpost.c` as follows
+
+```c
+/**
+ * Header for the generated file
+ **/
+static void add_header(struct buffer *b, struct module *mod)
+{
+	buf_printf(b, "#include <linux/module.h>\n");
+	/*
+	 * Include build-salt.h after module.h in order to
+	 * inherit the definitions.
+	 */
+	buf_printf(b, "#define INCLUDE_VERMAGIC\n");
+	buf_printf(b, "#include <linux/build-salt.h>\n");
+	buf_printf(b, "#include <linux/vermagic.h>\n");
+	buf_printf(b, "#include <linux/compiler.h>\n");
+	buf_printf(b, "\n");
+	buf_printf(b, "BUILD_SALT;\n");
+	buf_printf(b, "\n");
+	buf_printf(b, "MODULE_INFO(vermagic, VERMAGIC_STRING);\n");
+	buf_printf(b, "MODULE_INFO(name, KBUILD_MODNAME);\n");
+	buf_printf(b, "\n");
+	buf_printf(b, "__visible struct module __this_module\n");
+	buf_printf(b, "__section(.gnu.linkonce.this_module) = {\n");
+	buf_printf(b, "\t.name = KBUILD_MODNAME,\n");
+	if (mod->has_init)
+		buf_printf(b, "\t.init = init_module,\n");
+	if (mod->has_cleanup)
+		buf_printf(b, "#ifdef CONFIG_MODULE_UNLOAD\n"
+			      "\t.exit = cleanup_module,\n"
+			      "#endif\n");
+	buf_printf(b, "\t.arch = MODULE_ARCH_INIT,\n");
+	buf_printf(b, "};\n");
+}
+```
+
+Notice that there are conditional checkings of `mod->has_init`, and `mod->has_exit`,
+in each case if so then the generated code will include such initialization of `init` and `exit`
+as part of struct definition.
+
+It makes use of `__section` which deep down is a GCC's attribute to place such declared
+name into target section of ELF binary file.
+
+`__section` is a macro defined as 
+
+```c
+#define __section(S)                    __attribute__((__section__(#S)))
+```
+
+and don't be distracted by a somewhat complicated definition of `__this_module`.
+In fact, what it does is just to declare a structure with some fields initialized, and
+place such defined symbol at `.gnu.linkonce.this_module` section in ELF binary format.
+
+This section name of `.gnu.linkonce.this_module` will be picked up and fetched
+for its contained information later on whenever linux kernel loads a module as seen in
+`load_module(struct load_info *info, const char __user *uargs, int flags)` which calls
+`setup_load_info(struct load_info *info, int flags)` (both reside in `kernel/module.c`)
+in which it tries to find the section index
+
+```c
+info->index.mod = find_sec(info, ".gnu.linkonce.this_module");
+```
+
+and later it will read actual data + code from such section.
+
+Back to `add_header(...)` function, both `mod->has_init` and `mod->has_exit` are
+handled inside `handle_symbol(...)` function in `scripts/mod/modpost.c` as it
+searches for symbol namely `init_module` and `cleanup_module`
+before setting `1` to `has_init` and `has_cleanup` appropriately.
+
+# Workflow and output from `objdump`
+
+We can deduce the workflow done by a module post-processing step as follows
+
+1. <u>Build user's kernel module into `.o` object file</u>
+2. <u>Automatically generate simple and lightweight code just for module's meta-data then produce `.mod.o` object file</u>  
+
+   Generated code initializes `__this_module`'s `init` and `exit` to literally text of
+   `init_module`, and `cleanup_module` although for now both of these function are `*UND*`
+   as checked via `objdump` tool (see below), or undefined. This tells us that
+   the build process didn't link against a module object file `.o` just yet at this stage.
+3. <u>Produce `.ko` from `.o` and `.mod.o` by linking the latter twos together</u>  
+
+   Notice that in step 2, `init_module` and `cleanup_module` are `*UND*` or undefined.
+   But this stage as it finally does a linking step of `.o` and `.mod.o` together
+   to produce `.ko`. Now those two functions are defined and known. More info
+   can be seen at `Makefile`, `scripts/Makefile.modpost`, and `scripts/Makefile.modfinal`. 
+
+> Final `.ko` file includes everything. So a single `.ko` alone can be used as final deliverables to end-users for installation.
+
+Source code of a module is as follows
+
+> There is a good tutorial on writing kernel module at [https://sysprog21.github.io/lkmpg/#introduction](https://sysprog21.github.io/lkmpg/#introduction).
+
+```c
+#include <linux/kernel.h>
+#include <linux/module.h>
+
+void dummy(void)
+{
+        pr_info("Dummy\n");
+}
+
+int init_module(void)
+{
+        pr_info("Hello world 1.\n");
+        trace_printk("(trace debug) Hello world 1.\n");
+
+        dummy();
+
+        return 0;
+}
+
+void cleanup_module(void)
+{
+        pr_info("Goodbye world 1.\n");
+        trace_printk("(trace debug) Goodbye world 1.\n");
+}
+
+MODULE_LICENSE("GPL");
+```
+
+The following is for reference from output of `objdump` from `.o`, `.mod.o` and `.ko`
+after building above program.
+
+
+Notice that `.mod.o` doesn't include any user's defined symbols e.g. `dummy`.
+It's a simple and lightweight program that include setup of module's information,
+and `init`, `exit` hooking with the future function symbols to be linked at `.ko`
+linking stage.
+
+## `hello-1.o`
+
+```
+$ objdump -tC hello-1.o
+
+hello-1.o:     file format elf64-x86-64
+
+SYMBOL TABLE:
+0000000000000000 l    df *ABS*  0000000000000000 hello-1.c
+0000000000000000 l    d  .text  0000000000000000 .text
+0000000000000000 l    d  .data  0000000000000000 .data
+0000000000000000 l    d  .bss   0000000000000000 .bss
+0000000000000000 l    d  .rodata.str1.1 0000000000000000 .rodata.str1.1
+0000000000000000 l    d  .text.unlikely 0000000000000000 .text.unlikely
+0000000000000000 l    d  __mcount_loc   0000000000000000 __mcount_loc
+0000000000000010 l     O __trace_printk_fmt     0000000000000008 trace_printk_fmt.2
+0000000000000000 l     O __trace_printk_fmt     0000000000000008 trace_printk_fmt.0
+0000000000000000 l    d  .modinfo       0000000000000000 .modinfo
+0000000000000000 l     O .modinfo       000000000000000c __UNIQUE_ID_license86
+0000000000000000 l    d  .rodata.str1.8 0000000000000000 .rodata.str1.8
+0000000000000000 l    d  __trace_printk_fmt     0000000000000000 __trace_printk_fmt
+0000000000000008 l     O __trace_printk_fmt     0000000000000008 trace_printk_fmt.1
+0000000000000018 l     O __trace_printk_fmt     0000000000000008 trace_printk_fmt.3
+0000000000000000 l    d  .note.GNU-stack        0000000000000000 .note.GNU-stack
+0000000000000000 l    d  .comment       0000000000000000 .comment
+0000000000000000 g     F .text.unlikely 0000000000000017 dummy
+0000000000000000         *UND*  0000000000000000 __fentry__
+0000000000000000         *UND*  0000000000000000 printk
+0000000000000017 g     F .text.unlikely 0000000000000031 init_module
+0000000000000000         *UND*  0000000000000000 __trace_bputs
+0000000000000048 g     F .text.unlikely 000000000000002a cleanup_module
+```
+
+## `hello-1.mod.o`
+
+```
+$ objdump -tC hello-1.mod.o
+
+hello-1.mod.o:     file format elf64-x86-64
+
+SYMBOL TABLE:
+0000000000000000 l    df *ABS*  0000000000000000 hello-1.mod.c
+0000000000000000 l    d  .text  0000000000000000 .text
+0000000000000000 l    d  .data  0000000000000000 .data
+0000000000000000 l    d  .bss   0000000000000000 .bss
+0000000000000000 l    d  .modinfo       0000000000000000 .modinfo
+0000000000000000 l     O .modinfo       0000000000000023 __UNIQUE_ID_srcversion90
+0000000000000023 l     O .modinfo       0000000000000009 __UNIQUE_ID_depends89
+000000000000002c l     O .modinfo       000000000000000c __UNIQUE_ID_retpoline88
+0000000000000000 l    d  .gnu.linkonce.this_module      0000000000000000 .gnu.linkonce.this_module
+0000000000000038 l     O .modinfo       000000000000000d __UNIQUE_ID_name87
+0000000000000045 l     O .modinfo       000000000000002f __UNIQUE_ID_vermagic86
+0000000000000000 l    d  .note.Linux    0000000000000000 .note.Linux
+0000000000000000 l     O .note.Linux    0000000000000018 _note_7
+0000000000000000 l    d  .note.GNU-stack        0000000000000000 .note.GNU-stack
+0000000000000000 l    d  .comment       0000000000000000 .comment
+0000000000000000 g     O .gnu.linkonce.this_module      0000000000000380 __this_module
+0000000000000000         *UND*  0000000000000000 init_module
+0000000000000000         *UND*  0000000000000000 cleanup_module
+```
+
+## `hello-1.ko`
+
+```
+$ objdump -tC hello-1.ko
+
+hello-1.ko:     file format elf64-x86-64
+
+SYMBOL TABLE:
+0000000000000000 l    d  .note.gnu.build-id     0000000000000000 .note.gnu.build-id
+0000000000000000 l    d  .note.Linux    0000000000000000 .note.Linux
+0000000000000000 l    d  .text  0000000000000000 .text
+0000000000000000 l    d  .text.unlikely 0000000000000000 .text.unlikely
+0000000000000000 l    d  .rodata.str1.1 0000000000000000 .rodata.str1.1
+0000000000000000 l    d  __mcount_loc   0000000000000000 __mcount_loc
+0000000000000000 l    d  .modinfo       0000000000000000 .modinfo
+0000000000000000 l    d  .rodata.str1.8 0000000000000000 .rodata.str1.8
+0000000000000000 l    d  .data  0000000000000000 .data
+0000000000000000 l    d  __trace_printk_fmt     0000000000000000 __trace_printk_fmt
+0000000000000000 l    d  .gnu.linkonce.this_module      0000000000000000 .gnu.linkonce.this_module
+0000000000000000 l    d  .bss   0000000000000000 .bss
+0000000000000000 l    d  .comment       0000000000000000 .comment
+0000000000000000 l    d  .note.GNU-stack        0000000000000000 .note.GNU-stack
+0000000000000000 l    df *ABS*  0000000000000000 hello-1.mod.c
+000000000000000c l     O .modinfo       0000000000000023 __UNIQUE_ID_srcversion90
+000000000000002f l     O .modinfo       0000000000000009 __UNIQUE_ID_depends89
+0000000000000038 l     O .modinfo       000000000000000c __UNIQUE_ID_retpoline88
+0000000000000044 l     O .modinfo       000000000000000d __UNIQUE_ID_name87
+0000000000000051 l     O .modinfo       000000000000002f __UNIQUE_ID_vermagic86
+0000000000000000 l     O .note.Linux    0000000000000018 _note_7
+0000000000000000 l    df *ABS*  0000000000000000 hello-1.c
+0000000000000010 l     O __trace_printk_fmt     0000000000000008 trace_printk_fmt.2
+0000000000000000 l     O __trace_printk_fmt     0000000000000008 trace_printk_fmt.0
+0000000000000000 l     O .modinfo       000000000000000c __UNIQUE_ID_license86
+0000000000000008 l     O __trace_printk_fmt     0000000000000008 trace_printk_fmt.1
+0000000000000018 l     O __trace_printk_fmt     0000000000000008 trace_printk_fmt.3
+0000000000000000 g     O .gnu.linkonce.this_module      0000000000000380 __this_module
+0000000000000048 g     F .text.unlikely 000000000000002a cleanup_module
+0000000000000000         *UND*  0000000000000000 __fentry__
+0000000000000017 g     F .text.unlikely 0000000000000031 init_module
+0000000000000000         *UND*  0000000000000000 printk
+0000000000000000         *UND*  0000000000000000 __trace_bputs
+0000000000000000 g     F .text.unlikely 0000000000000017 dummy
+```
+\
+\
+`First published on September, 07, 2021`
