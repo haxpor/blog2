@@ -39,7 +39,7 @@ we had in mind already. Let's list out such code first below.
 
 Take a look at `libstdc++-v3/src/c++98/ios_init.cc`.
 
-```
+```cpp
   ios_base::Init::Init()
   {
     if (__gnu_cxx::__exchange_and_add_dispatch(&_S_refcount, 1) == 0)
@@ -91,7 +91,7 @@ Take a look at `libstdc++-v3/src/c++98/ios_init.cc`.
 
 Look at `libcxx/src/iostream.cpp`.
 
-```
+```cpp
 DoIOSInit::DoIOSInit()
 {
     force_locale_initialization();
@@ -127,7 +127,7 @@ DoIOSInit::DoIOSInit()
 Look at `stl/src/cout.cpp`, `stl/src/cerr.cpp`, `stl/src/cin.cpp`, and `stl/src/clog.cpp`.
 
 (`stl/src/cout.cpp`)
-```
+```cpp
 __PURE_APPDOMAIN_GLOBAL static filebuf fout(_cpp_stdout);
 
 #if defined(_M_CEE_PURE)
@@ -156,7 +156,7 @@ struct _Init_cout { // ensures that cout is initialized
 ```
 
 (`stl/src/cerr.cpp`)
-```
+```cpp
 __PURE_APPDOMAIN_GLOBAL static filebuf ferr(_cpp_stderr);
 
 #if defined(_M_CEE_PURE)
@@ -176,7 +176,7 @@ struct _Init_cerr { // ensures that cerr is initialized
 ```
 
 (`stl/src/cin.cpp`)
-```
+```cpp
 __PURE_APPDOMAIN_GLOBAL static filebuf fin(_cpp_stdin);
 
 #if defined(_M_CEE_PURE)
@@ -195,7 +195,7 @@ struct _Init_cin { // ensures that cin is initialized
 ```
 
 (`stl/src/clog.cpp`)
-```
+```cpp
 __PURE_APPDOMAIN_GLOBAL static filebuf flog(_cpp_stderr);
 
 #if defined(_M_CEE_PURE)
@@ -231,7 +231,7 @@ From all above, We can <font color="red">conclude</font> that
 ## GCC
 
 (`libstdc++-v3/src/c++98/ios_init.cc`)
-```
+```cpp
   ios_base::Init::~Init()
   {
     // Be race-detector-friendly.  For more info see bits/c++config.
@@ -262,7 +262,7 @@ From all above, We can <font color="red">conclude</font> that
 ## Clang
 
 (`libcxx/src/iostream.cpp`)
-```
+```cpp
 DoIOSInit::~DoIOSInit()
 {
 #ifndef _LIBCPP_HAS_NO_STDOUT
@@ -289,7 +289,7 @@ The actual implementation of destructor function can be seen at `stl/src/iostrea
 `stl/src/wiostrea.cpp`.
 
 (`stl/src/iostream.cpp`)
-```
+```cpp
 _CRTIMP2_PURE void __cdecl ios_base::Init::_Init_dtor(ios_base::Init*) { // flush standard streams last time
     if (--_Init_cnt == 0) { // flush standard streams
         if (_Ptr_cerr != nullptr) {
@@ -327,7 +327,7 @@ repository for consistency as did previously.
 ## GCC
 
 (`libstdc++-v3/include/std/ostream`)
-```
+```cpp
   template<typename _CharT, typename _Traits>
     inline basic_ostream<_CharT, _Traits>&
     endl(basic_ostream<_CharT, _Traits>& __os)
@@ -337,7 +337,7 @@ repository for consistency as did previously.
 ## Clang
 
 (`libcxx/include/ostream`)
-```
+```cpp
 template <class _CharT, class _Traits>
 inline
 basic_ostream<_CharT, _Traits>&
@@ -352,7 +352,7 @@ endl(basic_ostream<_CharT, _Traits>& __os)
 ## MSVC
 
 (`stl/inc/ostream`)
-```
+```cpp
 template <class _Elem, class _Traits>
 basic_ostream<_Elem, _Traits>& __CLRCALL_OR_CDECL endl(
     basic_ostream<_Elem, _Traits>& _Ostr) { // insert newline and flush stream
@@ -379,3 +379,7 @@ From above, we can <font color="red">conclude</font> that
 `June, 14, 2021`
 
 * Fixed typos.
+
+`Sep, 07, 2021`
+
+* Enhanced code listing with highlighting.
