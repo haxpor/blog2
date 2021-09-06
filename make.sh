@@ -44,6 +44,9 @@ YELLOW='\033[93m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
+# ignored pattern
+IGNORED_PATTERN="*_IGNORED.txt"
+
 # mathjax
 MATHJAX_URL="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full"
 
@@ -87,7 +90,7 @@ build_index() {
 	cp -p index_template.txt /tmp/blog2_index.txt
 
 	# source all titles from src/*.txt into index.txt
-	find src -type f -name "*.txt" -print0 | xargs --null ls -1 | sort -V | while read file
+	find src -type f -name "*.txt" ! -name ${IGNORED_PATTERN} -print0 | xargs --null ls -1 | sort -V | while read file
 	do
 		# get filename without extension
 		html_fname=$(basename "$file")
@@ -121,7 +124,7 @@ build_cpsupportfiles() {
 }
 
 list_allposts() {
-	find src -type f -name "*.txt" -print0 | xargs --null ls -1 | sort -V | while read file
+	find src -type f -name "*.txt" ! -name ${IGNORED_PATTERN} -print0 | xargs --null ls -1 | sort -V | while read file
 	do
 		# find published date as wrote (fixed pattern) inside the source file
 		pub_string=$(tail "$file" | grep "$PUBLISHED_DATE_PATTERN");
@@ -258,7 +261,7 @@ elif [ "$CMD" == "build" ]; then
 
 		# just for consistency with logic code in "build" case
 		# TODO: probably need to refactor this into function...
-		find src -type f -name "$target_file" -print0 | xargs --null ls -1 | sort -V | while read file
+		find src -type f -name "$target_file" ! -name ${IGNORED_PATTERN} -print0 | xargs --null ls -1 | sort -V | while read file
 		do
 			# get output filename without extension
 			oname=$(basename "$file")
@@ -314,7 +317,7 @@ elif [ "$CMD" == "build" ]; then
 			exit 0
 		fi
 
-		find src -type f -name "*.txt" -print0 | xargs --null ls -1 | sort -V | while read file
+		find src -type f -name "*.txt" ! -name ${IGNORED_PATTERN} -print0 | xargs --null ls -1 | sort -V | while read file
 		do
 			# get output filename without extension
 			oname=$(basename "$file")
