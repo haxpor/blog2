@@ -1,0 +1,221 @@
+kmod with cheesy baked-in of multiple command line operations
+=========================================================
+
+Ever wonder how `egrep`, or `fgrep` has any relationship to `grep` at all as they
+both have the same command line options as available by `grep` itself but can be
+able to perform a specific operation by its own.
+
+* `egrep` is shortened for `grep -E`; for extended regular expression
+* `fgrep` is shortened for `grep -F`; for fixed string search
+
+Actually there are other variants like `xzgrep`, `zgrep`, etc. although some of
+them might not support all operations of `grep`.
+
+Up on checking, those variants are implemented in shell script with some parameters
+pre-filled before forwarding them to execute with actual `grep` binary, or
+with some more handling logic for incoming parameters to clean them up or check
+whether it would decide to support, before forwarding it to `grep`.
+
+Feel free to check as only `grep` is an actual ELF executable binary, other variants
+are shell script in pure text file format.
+
+---
+
+Above case is simpler, but when I've stepped up on either `insmod`, `rmmod`, `lsmod`
+or you name it for the tools to do things with kernel module, things are different.
+
+`kmod` is stated to be `one tool to rule them all` (as seen in `tools/kmod.c`).
+Its main functionality is to manage your Linux kernel module e.g. to install, to remove,
+to inspect, etc. It has several other executable files with different name which
+can be invoked to execute specific operation it supports. The following is its children.
+
+* `insmod`   - to install a Linux kernel module
+* `rmmod`    - to remove a Linux kernel module
+* `lsmod`    - to list all active Linux kernel modules
+* `modinfo`  - to show information about a Linux kernel module
+* `modprobe` - more intelligent add/remove Linux kernel module
+* `depmod`   - to create a list of module dependencies .dep file
+
+Interesting thing is that inspecting its help message via `kmod --help` won't
+reveal any command line flags/options we can use to manually feed into the main 
+executable binary to get the same behavior/functionality as provided by any of
+its variants.
+
+```
+$ kmod --help
+kmod - Manage kernel modules: list, load, unload, etc
+Usage:
+        kmod [options] command [command_options]
+
+Options:
+        -V, --version     show version
+        -h, --help        show this help
+
+Commands:
+  help         Show help message
+  list         list currently loaded modules
+  static-nodes outputs the static-node information installed with the currently running kernel
+
+kmod also handles gracefully if called from following symlinks:
+  lsmod        compat lsmod command
+  rmmod        compat rmmod command
+  insmod       compat insmod command
+  modinfo      compat modinfo command
+  modprobe     compat modprobe command
+  depmod       compat depmod command
+```
+
+I even did try `$ kmod lsmod` before but it didn't lead to anything. That might
+sound stupid, but it's part of the seeking for the truth process. So you don't
+have to try that :P
+
+Inspecting one or all of those names reveals that they are just symbolic link files.
+
+```bash
+$ ls -la `which insmod
+lrwxrwxrwx 1 root root 9 Jun 14  2020 /usr/sbin/insmod -> /bin/kmod
+
+$ ls -la `which lsmod`
+lrwxrwxrwx 1 root root 9 Jun 14  2020 /usr/sbin/lsmod -> /bin/kmod
+```
+
+As each of its variant can perform different behavior/functionality.
+Now the question would be how it baked in those different options to feed into
+the main executable binary?
+
+Only way to find out is to peak into its source code.
+
+# Grep away the source
+
+Its source code is available via git at [https://git.kernel.org/pub/scm/utils/kernel/kmod/kmod.git](https://git.kernel.org/pub/scm/utils/kernel/kmod/kmod.git).
+
+We start by searching for `main(` function (that's not a typo, it's an actual
+search term for `grep`).
+
+Apparently, `main` function is defined inside `tools/kmod.c`.
+
+We will see the following array definition in such file which holds command
+structures for all commands it supports
+
+```c
+static const struct kmod_cmd *kmod_cmds[] = {
+	&kmod_cmd_help,
+	&kmod_cmd_list,
+	&kmod_cmd_static_nodes,
+
+#ifdef ENABLE_EXPERIMENTAL
+	&kmod_cmd_insert,
+	&kmod_cmd_remove,
+#endif
+};
+```
+
+`struct kmod_cmd` defined in `tools/kmod.h` to be as follows
+
+```c
+struct kmod_cmd {
+	const char *name;
+	int (*cmd)(int argc, char *argv[]);
+	const char *help;
+};
+```
+
+So we see that this structure not only just storing the name of the command,
+and help message. It also stores the function pointer to perform the operation
+which accept arguments from main program. We're getting closer!
+
+Look further in `tools/kmod.c`, inside `kmod_help` function, we will see that
+it iterates the whole command arrays to get help message to print out
+
+```c
+static int kmod_help(int argc, char *argv[])
+{
+	...
+
+	for (i = 0; i < ARRAY_SIZE(kmod_cmds); i++) {
+		if (kmod_cmds[i]->help != NULL) {
+			printf("  %-12s %s\n", kmod_cmds[i]->name,
+							kmod_cmds[i]->help);
+		}
+	}
+
+	...
+}
+```
+
+as well as the **core** thing we're looking for, it iterates over a command array
+to check which one to execute
+
+```c
+static int handle_kmod_commands(int argc, char *argv[])
+{
+	...
+
+	for (i = 0, err = -EINVAL; i < ARRAY_SIZE(kmod_cmds); i++) {
+		if (streq(kmod_cmds[i]->name, cmd)) {
+			err = kmod_cmds[i]->cmd(--argc, ++argv);
+			break;
+		}
+	}
+
+	...
+}
+```
+
+Final culprit is the caller site that calls `handle_kmod_commands`
+function as follows
+
+```c
+int main(int argc, char *argv[])
+{
+	...
+
+	if (streq(program_invocation_short_name, "kmod"))
+		err = handle_kmod_commands(argc, argv);
+	else
+		err = handle_kmod_compat_commands(argc, argv);
+
+	...
+}
+```
+
+It uses `program_invocation_short_name` in order to get the *basename* of the executable
+file user invoked to dispatch which operation it should perform!
+That clears out the curiosity.
+
+An excerpted man page says the following
+
+```manpage
+NAME
+       program_invocation_name, program_invocation_short_name - obtain name used to invoke calling program
+
+SYNOPSIS
+       #define _GNU_SOURCE         /* See feature_test_macros(7) */
+       #include <errno.h>
+
+       extern char *program_invocation_name;
+       extern char *program_invocation_short_name;
+
+DESCRIPTION
+       program_invocation_name  contains the name that was used to invoke the calling program.  This is the same as the value of argv[0] in main(), with the difference
+       that the scope of program_invocation_name is global.
+
+       program_invocation_short_name contains the basename component of name that was used to invoke the calling program.  That is, it is the same value as program_in‐
+       vocation_name, with all text up to and including the final slash (/), if any, removed.
+
+       These variables are automatically initialized by the glibc run-time startup code.
+```
+
+Notice that before you can use it, you have to `#define _GNU_SOURCE` before inclusion
+of `errno.h` header to avoid a need of manual declaring the following lines in your
+program
+
+```c
+extern char *program_invocation_name;
+extern char *program_invocation_short_name;
+```
+
+See my test case on this at [program_invocation_name.c](https://github.com/haxpor/linux_st/blob/master/program_invocation_name.c).
+\
+\
+`First published on September, 22, 2021`
