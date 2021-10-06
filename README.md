@@ -35,3 +35,5 @@ for this blog.
 | 27 | C++, CryEngine | [CryEngine Internals Series #2 - String Utilities](https://wasin.io/blog/27_ce-interns-2-string-funtionality-part2.html) |
 | 28 | CMake, Cross-compilation | [So you want ccmake on Windows?](https://wasin.io/blog/28_so-you-want-ccmake-on-windows.html) |
 | 29 | tools, git, perforce, vimdiff | [How to set up 3-way merge tool for git and perforce with vimdiff](https://wasin.io/blog/29_how-to-set-up-3-way-merge-tool-in-git-and-p4-with-vimdiff.html) |
+| 30 | linux, linux-kernel | [Linux Kernel #1 - Kernel Module init and exit function pointer](https://wasin.io/blog/30_linux-kernel-1-kernel-module-init-and-exit-function-pointers.html) |
+| 31 | GNU, tools, grep | [kmod with cheesy baked-in multiple command line operations](https://wasin.io/blog/31_kmod-with-cheesy-baked-in-multiple-command-line-operations.html) |
