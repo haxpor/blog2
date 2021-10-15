@@ -1,0 +1,62 @@
+Linux Kernel Manual Build Steps
+=========================================================
+
+The following is the striaght-to-the point of steps needed in order to manually
+build the upstream linux kernel. I used them several times with success.
+
+1. `cd /dir/to/linux-src-root`  
+      
+    Go to linux source root directory
+
+2. `cp /boot/config-$(uname -r) .config`  
+      
+    Copy current config file to start off in menuconfig later
+
+3. `make menuconfig`  
+      
+    If don't care about newer configurations, or don't want to hand-tune the
+    configurations, then just hit `Save` follows by `Exit`. This is to make sure
+    we get all the configurations available in new kernel version, and to avoid
+    unknown configurations.
+
+4. `make -j$(nproc)`  
+      
+    Or change `$(nproc)` to the specific number of threads to be used in compiling
+    and building the kernel.
+
+5. `sudo make modules_install`  or  
+   `sudo make INSTALL_MOD_STRIP=1 modules_install`  
+      
+    Use the former to not strip out debugging info from all modules, otherwise
+    use the latter. Most of the time, use the latter. If not then your `initrd`
+    image or init-ramdisk which will be loaded first after grub will be too big
+    and grub won't be able to load and boot the linux itself. Size can be bigger
+    like 10 times from stripped size of ~70 MB.
+
+6. `sudo make install`  
+      
+    Install the linux kernel. It will also rebuild kernel modules located in `/usr/src`
+    against this new linux kernel version again automatically, then output result
+    accordingly.
+
+7. `sudo update-initramfs -c -k <version-string>`  
+      
+    Create a new `initrd` image file in `/boot` for our newly built, and installed
+    linux kernel version. `<version-string>` can be grabbed and easily seen
+    while we do step 6.
+
+8. `sudo update-grub`  
+      
+    Update grub's entries so we will update the default entry to boot into,
+    as well as update its entries in case we want to specifically select which
+    linux kernel version to boot into from the grub menu.
+
+9. `reboot`  
+      
+    We can now reboot the system, and it will automatically boot into our new
+    linux kernel version we just built and installed with all steps above. We
+    then can check the version after booting with `uname -r`.
+
+\
+\
+`First published on October, 15, 2021`
