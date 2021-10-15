@@ -37,3 +37,4 @@ for this blog.
 | 29 | tools, git, perforce, vimdiff | [How to set up 3-way merge tool for git and perforce with vimdiff](https://wasin.io/blog/29_how-to-set-up-3-way-merge-tool-in-git-and-p4-with-vimdiff.html) |
 | 30 | linux, linux-kernel | [Linux Kernel #1 - Kernel Module init and exit function pointer](https://wasin.io/blog/30_linux-kernel-1-kernel-module-init-and-exit-function-pointers.html) |
 | 31 | GNU, tools, grep | [kmod with cheesy baked-in multiple command line operations](https://wasin.io/blog/31_kmod-with-cheesy-baked-in-multiple-command-line-operations.html) |
+| 32 | linux, linux-kernel | [Linux Kernel Manual Build Steps](https://wasin.io/blog/32_linux-kernel-manual-build-steps.html) |
