@@ -7,7 +7,7 @@
 
 # check basic requirement needed to properly run the program
 # Depend on the following program
-# 1. firefox
+# 1. firefox or google-chrome-stable (configurable via `BROWSER` variable)
 # 2. pandoc
 # 3. inotifywait
 # if it detects a missing dependency then it will print out and exit immediately.
@@ -34,7 +34,9 @@ CMD=$1
 BUILD_DIR=build
 
 # browser to open to see the changes of editing .html file
-BROWSER=firefox
+BROWSER=google-chrome-stable
+# optional parameters to launch BROWSER, leave it empty if there's none
+BROWSER_PARAMS="--enable-features=WebUIDarkMode --force-dark-mode"
 
 # fixed published date in source files
 PUBLISHED_DATE_PATTERN="First published on "
@@ -208,19 +210,9 @@ if [ "$CMD" == "new" ]; then
 	# pre-convert so users can see the result of .html now
 	pandoc --mathjax=$MATHJAX_URL -c belug1.css -H header.html -B before.html -A after.html "src/$file_name" --metadata pagetitle="$title" -o "$BUILD_DIR/${file_name%%.*}.html"
 
-	# now open the browser tab (only if such program is available)
-	# if not then user should be opening this manually
-	if grep -q -i microsoft /proc/version; then
-		# for Windows target browser has .exe extention
-		if [ ${BROWSER} == "firefox" ]; then
-			# make sure path is properly set
-			${BROWSER}.exe $BUILD_DIR/${file_name%%.*}.html
-		fi
-	else
-		which ${BROWSER} 2>&1 > /dev/null
-		if [ $? -eq 0 ]; then
-			${BROWSER} $BUILD_DIR/${file_name%%.*}.html
-		fi
+	which ${BROWSER} 2>&1 > /dev/null
+	if [ $? -eq 0 ]; then
+		${BROWSER} ${BROWSER_PARAMS} $BUILD_DIR/${file_name%%.*}.html
 	fi
 
 	# wait and listen to file changes event for writing.
