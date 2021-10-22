@@ -38,3 +38,4 @@ for this blog.
 | 30 | linux, linux-kernel | [Linux Kernel #1 - Kernel Module init and exit function pointer](https://wasin.io/blog/30_linux-kernel-1-kernel-module-init-and-exit-function-pointers.html) |
 | 31 | GNU, tools, grep | [kmod with cheesy baked-in multiple command line operations](https://wasin.io/blog/31_kmod-with-cheesy-baked-in-multiple-command-line-operations.html) |
 | 32 | linux, linux-kernel | [Linux Kernel Manual Build Steps](https://wasin.io/blog/32_linux-kernel-manual-build-steps.html) |
+| 33 | linux, linux-kernel | [How to Remove Old Version of Manual-Built Linux Kernels](https://wasin.io/blog/33_how-to-remove-old-version-of-manual-built-linux-kernels.html) |
