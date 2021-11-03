@@ -36,3 +36,7 @@ Follow these steps
 Now we can test by rebooting the system then inspect the grub entries, or just
 directly inspect `/boot/grub/grub.cfg` file. It should be properly updated
 according to related files we have in `/boot` directory.
+
+\
+\
+`First published on October, 22, 2021`
