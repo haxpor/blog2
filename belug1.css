@@ -102,6 +102,6 @@ h2 {
 	padding-top: 25pt;
 	border-bottom: 2px solid #ddd;
 }
-ul {
+ul, ol {
 	line-height: 1.5rem;
 }
