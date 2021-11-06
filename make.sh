@@ -123,6 +123,7 @@ build_index() {
 
 build_cpsupportfiles() {
 	cp -p belug1.css $BUILD_DIR/belug1.css
+	cp -rp assets $BUILD_DIR/assets
 }
 
 list_allposts() {
